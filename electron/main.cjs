@@ -98,60 +98,70 @@ ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, model }) => {
   if (!key) return { ok: false, message: '请先填写 API Token' }
   const pathOf = (u) => { try { return new URL(u).pathname } catch { return u } }
 
-  // 候选探测点：兼容 baseUrl 带/不带 /v1 的写法
-  const probeUrls = [...new Set([
-    `${base}/models`,
-    base.endsWith('/v1') ? `${base.slice(0, -3)}/models` : `${base}/v1/models`,
-  ])]
-  // 两种鉴权：OpenAI 系 Bearer / Anthropic 系 x-api-key
+  // 候选根：Base URL 带/不带 /v1 都覆盖（中转网关常见两种写法）
+  const roots = [...new Set([base, base.endsWith('/v1') ? base.slice(0, -3) : `${base}/v1`])]
   const authSets = [
     { Authorization: `Bearer ${key}` },
     { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
   ]
+  const tried = []
+  const note = (status, url, method) => tried.push(`${method} ${pathOf(url)}`)
 
-  for (const url of probeUrls) {
+  // 1) GET {root}/models：列表接口存在则直接验通 Token
+  for (const root of roots) {
+    const url = `${root}/models`
     let authRejected = false
     for (const headers of authSets) {
       try {
         const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) })
+        note(res.status, url, 'GET')
         if (res.ok) return { ok: true, message: `连接成功（GET ${pathOf(url)}）` }
-        if (res.status === 401 || res.status === 403) { authRejected = true; continue }
-        if (res.status !== 404) return { ok: false, message: `服务返回 ${res.status}（GET ${pathOf(url)}）` }
+        if (res.status === 401 || res.status === 403) authRejected = true
+        else if (res.status !== 404) return { ok: false, message: `服务返回 ${res.status}（GET ${pathOf(url)}）` }
       } catch (e) {
         return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
       }
     }
-    // 该路径存在但两种鉴权都被拒 → Token 问题，路径无需再试
-    if (authRejected) return { ok: false, message: '鉴权失败，请检查 API Token' }
+    if (authRejected) return { ok: false, message: `鉴权失败（GET ${pathOf(url)}），请检查 API Token` }
   }
 
-  // models 列表接口不存在（中转网关常见）：用最小模型调用兜底（约 1 token）
+  // 2) models 列表不存在（中转网关常见）：最小模型调用兜底（约 1 token），路径与鉴权交叉尝试
+  let postAuthRejected = false
   if (model) {
-    const posts = [
-      [`${base}/chat/completions`, { Authorization: `Bearer ${key}` },
-        { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }],
-      [`${base}/messages`, { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        { model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }],
-    ]
-    for (const [url, headers, body] of posts) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
-        })
-        if (res.ok) return { ok: true, message: `连接成功（POST ${pathOf(url)}，模型可用）` }
-        if (res.status !== 404 && res.status !== 401 && res.status !== 403) {
-          return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(url)}）` }
+    const bodies = {
+      openai: { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 },
+      anthropic: { model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] },
+    }
+    for (const root of roots) {
+      for (const [url, body] of [
+        [`${root}/chat/completions`, bodies.openai],
+        [`${root}/messages`, bodies.anthropic],
+      ]) {
+        for (const headers of authSets) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+              body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
+            })
+            note(res.status, url, 'POST')
+            if (res.ok) return { ok: true, message: `连接成功（POST ${pathOf(url)}，模型可用）` }
+            if (res.status === 401 || res.status === 403) { postAuthRejected = true; continue }
+            if (res.status !== 404) {
+              const detail = await res.text().catch(() => '')
+              return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(url)}）${detail ? '：' + detail.slice(0, 80) : ''}` }
+            }
+          } catch (e) {
+            return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+          }
         }
-      } catch (e) {
-        return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
       }
     }
   }
 
+  if (postAuthRejected) return { ok: false, message: `鉴权失败（${[...new Set(tried)].join('、')}），请检查 API Token` }
   return {
     ok: false,
-    message: `接口 404（已试 ${probeUrls.map(pathOf).join('、')}），请核对 Base URL${model ? '' : '；填写主模型后可再兜底验证'}`,
+    message: `接口 404（已试 ${[...new Set(tried)].join('、')}）。Base URL 通常填到 /v1 为止，如 https://host/anthropic/v1${model ? '' : '；填写主模型后可用模型调用兜底验证'}`,
   }
 })
 
