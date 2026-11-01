@@ -13,8 +13,9 @@
   渲染层只做展示与控制，经 IPC 传事件流。
 - **数据层**：SQLite 采用 Pi durable 包的"信封模式"（索引列 + `record JSON`），
   STRICT 表 + 版本化迁移，会话/消息/工具调用全量入库。
-- **Phase 0 已完成**：模型等级配置页（模型 / API Key / Base URL / 连接测试）已入库
-  `model_levels` 表，你现在就可以录入。
+- **Phase 0 已完成**：设置模态框（头像旁齿轮唤起）——Base URL / API Token /
+  模型槽位（主/Mythos/Fable/Opus/Sonnet/Haiku）+ 连接测试，落 SQLite `app_config`，
+  你现在就可以录入。
 
 ## 1. 参照物分析：Pi 是什么，取什么、弃什么
 
@@ -53,7 +54,7 @@ agentLoop(prompts, context, config, signal, streamFn) → EventStream<AgentEvent
   `oauth`、headers 命令化注入）——与我们配置页的字段一一对应；
 - `ai/src/providers/*`：42 个 provider（anthropic/azure/bedrock/…），OpenAI 兼容口通用；
 - `coding-agent/src/core/auth-storage.ts`：`Credential = api_key | oauth`，按 providerId 存
-  `auth.json`——**我们改为 SQLite**（已做，见 §3）。
+  `auth.json`——**我们改为 SQLite 单行 `app_config`**（已做，见 §3）。
 
 ### 1.4 弃用项
 
@@ -133,6 +134,7 @@ CREATE TABLE tool_calls (
 ) STRICT;
 CREATE INDEX tool_calls_by_session ON tool_calls (session_id, id);
 
+-- 应用配置（Phase 0 已建：单行 baseUrl + API Token + 模型槽位 JSON）
 -- 工作流模板（FlowPilot 现有 workflows 概念入库，替代 data/workflows.js）
 CREATE TABLE workflows (
   id INTEGER PRIMARY KEY,
@@ -184,12 +186,12 @@ class AgentHost {
 
 ## 5. 模型 / Provider 层
 
-- **配置页（已完成）**：`model_levels`（等级名 / 模型 / Base URL / API Key / 启用态），
-  表单内"测试连接"（`GET {baseUrl}/models` 探活）；
-- **模型解析**（provider.cjs）：任务创建时选等级 → 取 `model_levels` 行 →
+- **配置（已完成）**：设置模态框 = 单一 `baseUrl + API Token` + 模型槽位表
+  （`app_config.models` JSON：main/mythos/fable/opus/sonnet/haiku），表单内
+  "测试连接"（`GET {baseUrl}/models` 探活）；
+- **模型解析**（provider.cjs）：按槽位名取 `app_config.models[key]` →
   组装 pi-ai 的 `{ model, apiKey, baseUrl }` → 传给 `agentLoop` 的 `config.model`；
-- **多等级路由**：Workflow 节点可声明用哪个等级（如"采集节点用轻量、分析节点用旗舰"），
-  落 `workflows.graph` 的节点属性；未声明时用任务默认等级；
+- **多槽位路由**：Workflow 节点可声明用哪个槽位（如"采集节点用 haiku、分析节点用 opus"）；
 - 兼容性：OpenAI 兼容口（deepseek/moonshot/qwen/openai 等）走同一 baseUrl+key；
   Anthropic 原生口在 Phase 2 加 provider 适配（pi 的 `providers/anthropic.ts` 可直接抄参数映射）。
 
@@ -197,7 +199,7 @@ class AgentHost {
 
 | 页面 | 改造 |
 |---|---|
-| 模型配置 | ✅ 已完成 |
+| 设置模态框（头像旁齿轮） | ✅ 已完成 |
 | 任务台 | 任务创建表单加"模型等级"选择；列表数据改从 SQLite 读 |
 | Run 画布 | 节点/边由 tool_calls 实时生成（不再是静态 demo board）；进度 = 真实状态机 |
 | 会话抽屉 | 消息流消费 IPC 事件（打字机已有组件）；输入即 steering |

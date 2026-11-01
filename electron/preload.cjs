@@ -2,9 +2,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('settings', {
-  list: () => ipcRenderer.invoke('settings:list'),
-  save: (row) => ipcRenderer.invoke('settings:save', row),
-  remove: (id) => ipcRenderer.invoke('settings:delete', id),
+  get: () => ipcRenderer.invoke('settings:get'),
+  save: (cfg) => ipcRenderer.invoke('settings:save', cfg),
   test: (cfg) => ipcRenderer.invoke('settings:test', cfg),
 })
 

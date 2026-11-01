@@ -87,7 +87,7 @@ function createWindow() {
 }
 
 // 模型等级配置：SQLite 持久化（app.getPath('userData')/flowpilot.db）
-ipcMain.handle('settings:list', () => store.list())
+ipcMain.handle('settings:get', () => store.get())
 ipcMain.handle('settings:save', (_, row) => store.save(row))
 ipcMain.handle('settings:delete', (_, id) => store.remove(id))
 // 连接测试：OpenAI 兼容口探测（GET /models），不落库不计费

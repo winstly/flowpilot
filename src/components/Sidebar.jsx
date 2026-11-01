@@ -1,16 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquareText, Store, BookOpen, Settings2, Plus, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { MessageSquareText, Store, BookOpen, Settings, Plus, Sparkles } from 'lucide-react'
+import SettingsDialog from '@/components/SettingsDialog'
 import toast from 'react-hot-toast'
 
 const NAV = [
   { to: '/tasks', icon: MessageSquareText, label: '任务与对话' },
   { to: '/market', icon: Store, label: '资源与能力' },
   { to: '/insights', icon: BookOpen, label: '团队知识库' },
-  { to: '/settings', icon: Settings2, label: '模型配置' },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const [cfgOpen, setCfgOpen] = useState(false)
   const newTask = () => {
     navigate('/tasks')
     toast('已回到任务创建面板')
@@ -65,16 +67,26 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* 用户区 */}
+      {/* 用户区：头像右侧设置入口 */}
       <div className="flex items-center gap-2.5 border-t border-line pt-3.5">
         <span className="flex size-8 flex-none items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand-deep">
           檀
         </span>
-        <div className="sb-usermeta min-w-0">
+        <div className="sb-usermeta min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-ink">檀小猊</div>
           <div className="truncate text-xs text-mute">产品效能工作组</div>
         </div>
+        <button
+          className="iconbtn !size-8 flex-none"
+          aria-label="设置"
+          title="设置"
+          onClick={() => setCfgOpen(true)}
+        >
+          <Settings size={16} />
+        </button>
       </div>
+
+      <SettingsDialog open={cfgOpen} onOpenChange={setCfgOpen} />
     </aside>
   )
 }

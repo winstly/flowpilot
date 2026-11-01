@@ -1,4 +1,5 @@
-// 模型等级配置存储：node:sqlite（Node 24 内置，零原生依赖）
+// 应用配置存储：node:sqlite（Node 24 内置，零原生依赖）
+// 单行配置：baseUrl + API Token + 各模型槽位（主/Mythos/Fable/Opus/Sonnet/Haiku…）
 const { DatabaseSync } = require('node:sqlite')
 const path = require('node:path')
 const fs = require('node:fs')
@@ -9,37 +10,33 @@ function init(userDataDir) {
   fs.mkdirSync(userDataDir, { recursive: true })
   db = new DatabaseSync(path.join(userDataDir, 'flowpilot.db'))
   db.exec(`
-    CREATE TABLE IF NOT EXISTS model_levels (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      model TEXT NOT NULL,
-      base_url TEXT NOT NULL,
-      api_key TEXT NOT NULL,
-      note TEXT NOT NULL DEFAULT '',
-      enabled INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+    DROP TABLE IF EXISTS model_levels;
+    CREATE TABLE IF NOT EXISTS app_config (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      base_url TEXT NOT NULL DEFAULT '',
+      api_key TEXT NOT NULL DEFAULT '',
+      models TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(models)),
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
-    );
+    ) STRICT;
   `)
 }
 
-const list = () =>
-  db.prepare('SELECT * FROM model_levels ORDER BY id').all()
-
-function save(row) {
-  if (row.id) {
-    db.prepare(
-      `UPDATE model_levels SET name=?, model=?, base_url=?, api_key=?, note=?, enabled=?,
-       updated_at=datetime('now','localtime') WHERE id=?`,
-    ).run(row.name, row.model, row.base_url, row.api_key, row.note ?? '', row.enabled ? 1 : 0, row.id)
-    return row.id
-  }
-  const r = db
-    .prepare('INSERT INTO model_levels (name, model, base_url, api_key, note, enabled) VALUES (?,?,?,?,?,?)')
-    .run(row.name, row.model, row.base_url, row.api_key, row.note ?? '', row.enabled ? 1 : 0)
-  return Number(r.lastInsertRowid)
+function get() {
+  const row = db.prepare('SELECT * FROM app_config WHERE id = 1').get()
+  if (!row) return { base_url: '', api_key: '', models: {} }
+  return { base_url: row.base_url, api_key: row.api_key, models: JSON.parse(row.models) }
 }
 
-const remove = (id) => db.prepare('DELETE FROM model_levels WHERE id = ?').run(id)
+function save(cfg) {
+  db.prepare(`
+    INSERT INTO app_config (id, base_url, api_key, models, updated_at)
+    VALUES (1, ?, ?, ?, datetime('now','localtime'))
+    ON CONFLICT(id) DO UPDATE SET
+      base_url = excluded.base_url,
+      api_key = excluded.api_key,
+      models = excluded.models,
+      updated_at = excluded.updated_at
+  `).run(cfg.base_url ?? '', cfg.api_key ?? '', JSON.stringify(cfg.models ?? {}))
+}
 
-module.exports = { init, list, save, remove }
+module.exports = { init, get, save }

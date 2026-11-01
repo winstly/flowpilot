@@ -6,7 +6,6 @@ const CRUMBS = {
   '/tasks': ['工作台', '任务与对话'],
   '/market': ['工作台', '资源与能力'],
   '/insights': ['工作台', '团队知识库'],
-  '/settings': ['工作台', '模型配置'],
 }
 
 export default function TopBar() {
