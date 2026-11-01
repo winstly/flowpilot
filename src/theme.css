@@ -237,8 +237,8 @@
   /* 黄金分割位：顶边落在视口 38.2% 附近，不做 50% 居中（防下沉错觉） */
   margin: max(80px, 15vh) auto auto;
   max-height: calc(100vh - max(80px, 15vh) - 24px);
-  /* 把滚动条裁进圆角内，避免方形滑轨溢出圆角边界 */
-  clip-path: inset(0 round var(--radius-modal));
+  /* 内容裁进圆角（overflow 不裁自身投影，勿用 clip-path —— 会裁掉 box-shadow） */
+  overflow: hidden;
 }
 .dlg::backdrop {
   background: rgba(15, 23, 42, 0.48);
@@ -283,8 +283,8 @@
   /* 三层影收敛为 dialog 档（两段式：接触影随层高衰减） */
   box-shadow: var(--shadow-dialog);
   animation: dlg-in .24s ease;
-  /* 同上：滚动条裁进圆角 */
-  clip-path: inset(0 round var(--radius-modal));
+  /* 同上：内容裁进圆角且不裁自身投影 */
+  overflow: hidden;
 }
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 

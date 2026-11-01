@@ -216,8 +216,8 @@ export default function RunPage() {
         {task.status === 'draft' && (
           <div className="panel absolute right-5 top-4 z-20 w-[220px] px-4 py-3 text-xs text-ink2 shadow-pop">
             <div className="mb-1.5 text-xs font-medium text-mute">任务概要</div>
-            <div className="meta-line mt-1"><span>{task.board.length} 节点</span><span>{getWorkflow(task.workflowId)?.name}</span></div>
-            <p className="mt-1 text-xs text-mute">点击「开始执行」启动工作流</p>
+            <div className="meta-line"><span>{task.board.length} 节点</span><span>{getWorkflow(task.workflowId)?.name}</span></div>
+            
           </div>
         )}
 

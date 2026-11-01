@@ -27,12 +27,16 @@ function createWindow() {
 
   win.once('ready-to-show', () => {
     win.show()
-    // 验收用截图钩子：SNAPSHOT=path [SNAPSHOT_ROUTE=tasks/T-100/run] npx electron .
-    // 注意路由不带前导斜杠（Git Bash 的 MSYS 会改写 / 开头的环境变量值）
+    // 验收用截图钩子：SNAPSHOT=path [SNAPSHOT_ROUTE=tasks/T-100/run] [SNAPSHOT_JS=js] npx electron .
+    // 注意路由/JS 不带前导斜杠（Git Bash 的 MSYS 会改写 / 开头的环境变量值）
     if (process.env.SNAPSHOT) {
       setTimeout(async () => {
         if (process.env.SNAPSHOT_ROUTE) {
           await win.webContents.executeJavaScript(`location.hash = '#/' + ${JSON.stringify(process.env.SNAPSHOT_ROUTE)}`)
+          await new Promise((r) => setTimeout(r, 600))
+        }
+        if (process.env.SNAPSHOT_JS) {
+          await win.webContents.executeJavaScript(process.env.SNAPSHOT_JS)
           await new Promise((r) => setTimeout(r, 600))
         }
         const image = await win.webContents.capturePage()
@@ -43,7 +47,7 @@ function createWindow() {
   })
 
   if (isDev) {
-    win.loadURL('http://localhost:5173')
+    win.loadURL('http://localhost:2468')
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'))
   }
@@ -52,6 +56,22 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  // 原生文本编辑语义：可编辑区右键给剪切/复制/粘贴（保留系统级编辑契约）
+  win.webContents.on('context-menu', (_, params) => {
+    if (!params.isEditable) return
+    const menu = Menu.buildFromTemplate([
+      { role: 'undo', enabled: params.editFlags.canUndo },
+      { role: 'redo', enabled: params.editFlags.canRedo },
+      { type: 'separator' },
+      { role: 'cut', enabled: params.editFlags.canCut },
+      { role: 'copy', enabled: params.editFlags.canCopy },
+      { role: 'paste', enabled: params.editFlags.canPaste },
+      { type: 'separator' },
+      { role: 'selectAll', enabled: params.editFlags.canSelectAll },
+    ])
+    menu.popup({ window: win })
   })
 
   // 最大化状态 → 渲染层窗口控制字形切换

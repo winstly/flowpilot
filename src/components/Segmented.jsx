@@ -12,7 +12,7 @@ export default function Segmented({ options, value, onChange }) {
             type="button"
             role="tab"
             aria-selected={active}
-            className={`flex items-center gap-1 rounded-btn px-2.5 py-1 text-xs font-medium transition-all duration-[180ms] ${
+            className={`flex items-center gap-1 rounded-sm px-2.5 py-1 text-xs font-medium transition-all duration-[180ms] ${
               active
                 ? 'bg-white text-ink shadow-card'
                 : 'text-mute hover:text-ink'
