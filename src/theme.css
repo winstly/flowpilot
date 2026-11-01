@@ -54,9 +54,8 @@
 }
 
 @layer base {
-  /* 桌面标题条高度：Web 为 0，Electron 壳由 main.jsx 注入 is-desktop 覆盖 */
-  html { font-family: var(--font-sans); --titlebar-h: 0px; }
-  html.is-desktop { --titlebar-h: 32px; }
+  /* 自绘标题条高度（抽屉/浮层让位用） */
+  html { font-family: var(--font-sans); --titlebar-h: 32px; }
   body { background: var(--color-canvas); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
   ::selection { background: var(--color-brand-line); }
   /* 焦点环：品牌实色 3:1+ 对比（浅色 line2 不足以作可见焦点） */

@@ -4,11 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron . --dev\"",
     "build": "vite build",
-    "preview": "vite preview",
-    "dev:desktop": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron . --dev\"",
-    "build:desktop": "vite build && electron ."
+    "start": "electron ."
   },
   "dependencies": {
     "jszip": "^3.10.2",

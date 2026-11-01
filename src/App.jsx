@@ -28,8 +28,8 @@ function Shell() {
 export default function App() {
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      {/* 桌面壳：自绘标题条（Web 无 window.desktop，零渲染零偏移） */}
-      {window.desktop && <TitleBar />}
+      {/* 自绘标题条（无原生标题栏） */}
+      <TitleBar />
       <div className="min-h-0 flex-1">
         <Routes>
           {/* Run 页全屏接管，不套外壳 */}
