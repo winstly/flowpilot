@@ -97,7 +97,7 @@ const SLOT_ORDER = [
   ['opus', 'Opus'], ['sonnet', 'Sonnet'], ['haiku', 'Haiku'],
 ]
 
-// 连接测试：多路径 + 多鉴权探测；端点通后逐槽位扫描模型 ID
+// 连接测试：多路径 + 多鉴权 + 同主机兄弟挂载探测；模型按 ID 分组扫描
 ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, models }) => {
   const base = (baseUrl || '').trim().replace(/\/+$/, '').replace(/\/(chat\/completions|messages)$/, '')
   const key = (apiKey || '').trim()
@@ -107,32 +107,48 @@ ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, models }) => {
   const extractMsg = (text) => {
     try { const j = JSON.parse(text); return j.error?.message || j.message || text } catch { return text }
   }
-  // "模型不被服务支持"类错误（与 max_tokens 等参数类 400 区分）
   const isModelIssue = (text) => /model/i.test(text) && /(unsupported|unknown|invalid|not[ _-]?found|not[ _-]?supported|does not exist|no such|not available)/i.test(text)
 
+  // 槽位按模型 ID 分组：多槽位填同一 ID 时合并报文，不误导成单个槽位的问题
   const slots = SLOT_ORDER
-    .map(([key, label]) => ({ key, label, model: (models?.[key] || '').trim() }))
+    .map(([k, label]) => ({ label, model: (models?.[k] || '').trim() }))
     .filter((s) => s.model)
-  const uniq = (arr) => [...new Map(arr.map((s) => [s.model, s])).values()]
+  const groups = []
+  for (const s of slots) {
+    const g = groups.find((x) => x.model === s.model)
+    if (g) g.labels.push(s.label)
+    else groups.push({ model: s.model, labels: [s.label] })
+  }
+  const labelOf = (g) => (g.labels.length === slots.length ? '全部槽位' : g.labels.join('、'))
 
-  const roots = [...new Set([base, base.endsWith('/v1') ? base.slice(0, -3) : `${base}/v1`])]
+  // 候选根：base 与 base/v1 + 同主机兄弟挂载（…/anthropic 型中转的 OpenAI 口常在 …/v1）
+  const roots = [base, base.endsWith('/v1') ? base.slice(0, -3) : `${base}/v1`]
+  const lastSlash = base.lastIndexOf('/')
+  if (lastSlash > 'https://x'.length) {
+    const parent = base.slice(0, lastSlash)
+    roots.push(parent, `${parent}/v1`)
+  }
+  const uniqRoots = [...new Set(roots)]
   const authSets = [
     { Authorization: `Bearer ${key}` },
     { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
   ]
   const tried = []
+  const okMsg = (g, url, root) =>
+    `连接成功（POST ${pathOf(url)}，${labelOf(g)}可用）${root !== base ? `；建议 Base URL 改填 ${root}` : ''}`
 
   // 1) GET {root}/models：列表接口存在则直接验通 Token
-  for (const root of roots) {
+  for (const root of uniqRoots) {
     const url = `${root}/models`
     let authRejected = false
     for (const headers of authSets) {
       try {
         const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) })
         tried.push(`GET ${pathOf(url)}`)
-        if (res.ok) return { ok: true, message: `连接成功（GET ${pathOf(url)}）` }
+        if (res.ok) return { ok: true, message: `连接成功（GET ${pathOf(url)}）${root !== base ? `；建议 Base URL 改填 ${root}` : ''}` }
         if (res.status === 401 || res.status === 403) authRejected = true
         else if (res.status !== 404) return { ok: false, message: `服务返回 ${res.status}（GET ${pathOf(url)}）：${extractMsg(await res.text().catch(() => '')).slice(0, 120)}` }
+        else break // 404 是路径级，不必换鉴权重试
       } catch (e) {
         return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
       }
@@ -140,75 +156,75 @@ ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, models }) => {
     if (authRejected) return { ok: false, message: `鉴权失败（GET ${pathOf(url)}），请检查 API Token` }
   }
 
-  if (slots.length === 0) {
+  if (groups.length === 0) {
     return { ok: false, message: `接口无 models 列表（已试 ${[...new Set(tried)].join('、')}），请填写模型槽位后验证模型可用性` }
   }
 
-  // 2) 最小模型调用（约 1 token/次）：找到活端点（被拒但非 404/401），再逐槽位扫描
+  // 2) 最小模型调用（约 1 token/次）：扫全部候选端点，收集中"活但模型被拒"的端点
   const bodyOf = (kind, model) => kind === 'chat'
     ? { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }
     : { model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }
 
-  let live = null // { url, headers, kind }
-  let postAuthRejected = false
-  for (const root of roots) {
+  const live = []
+  let authReject = false
+  for (const root of uniqRoots) {
     for (const [url, kind] of [[`${root}/chat/completions`, 'chat'], [`${root}/messages`, 'msg']]) {
+      let hit = null
       for (const headers of authSets) {
-        const s = slots[0]
         try {
           const res = await fetch(url, {
             method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-            body: JSON.stringify(bodyOf(kind, s.model)), signal: AbortSignal.timeout(10000),
+            body: JSON.stringify(bodyOf(kind, groups[0].model)), signal: AbortSignal.timeout(10000),
           })
           tried.push(`POST ${pathOf(url)}`)
           const text = await res.text().catch(() => '')
-          if (res.ok) return { ok: true, message: `连接成功（POST ${pathOf(url)}，${s.label}可用）` }
-          if (res.status === 401 || res.status === 403) { postAuthRejected = true; continue }
-          if (res.status === 400 && isModelIssue(text)) { live = { url, headers, kind }; break }
-          if (res.status !== 404) return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(url)}）：${extractMsg(text).slice(0, 120)}` }
+          if (res.ok) return { ok: true, message: okMsg(groups[0], url, root) }
+          if (res.status === 404) break // 路径级
+          if (res.status === 401 || res.status === 403) { authReject = true; continue }
+          if (res.status === 400 && isModelIssue(text)) { hit = { headers, msg: extractMsg(text).slice(0, 80) }; break }
+          return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(url)}）：${extractMsg(text).slice(0, 120)}` }
         } catch (e) {
           return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
         }
       }
-      if (live) break
+      if (hit) live.push({ url, kind, root, headers: hit.headers, rejected: [{ group: groups[0], msg: hit.msg }] })
     }
-    if (live) break
   }
 
-  if (postAuthRejected && !live) return { ok: false, message: `鉴权失败（${[...new Set(tried)].join('、')}），请检查 API Token` }
-  if (!live) {
+  // 3) 其余模型在各活端点逐个验证（不同 ID 时才有额外请求）
+  for (const l of live) {
+    for (const g of groups.slice(1)) {
+      try {
+        const res = await fetch(l.url, {
+          method: 'POST', headers: { ...l.headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyOf(l.kind, g.model)), signal: AbortSignal.timeout(10000),
+        })
+        const text = await res.text().catch(() => '')
+        if (res.ok) {
+          const others = l.rejected.map((r) => `${labelOf(r.group)}「${r.group.model}」`).join('、')
+          return { ok: true, message: `${okMsg(g, l.url, l.root)}${others ? `；但 ${others} 不受支持` : ''}` }
+        }
+        if (res.status === 400 && isModelIssue(text)) l.rejected.push({ group: g, msg: extractMsg(text).slice(0, 80) })
+        else return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(l.url)}）：${extractMsg(text).slice(0, 120)}` }
+      } catch (e) {
+        return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+      }
+    }
+  }
+
+  // 4) 分端点报告被拒清单（同 ID 合并槽位名）
+  if (live.length) {
+    const lines = live.map((l) =>
+      `POST ${pathOf(l.url)}：${l.rejected.map((r) => `${labelOf(r.group)}「${r.group.model}」— ${r.msg}`).join('；')}`)
     return {
       ok: false,
-      message: `接口 404（已试 ${[...new Set(tried)].join('、')}）。Base URL 通常填到 /v1 为止，如 https://host/anthropic/v1`,
+      message: `接口已通，但模型不受支持——${lines.join('；')}。若模型由其它接口提供（如 OpenAI 兼容口），换 Base URL 后重测；并核对模型 ID 与服务登记名的拼写、大小写一致`,
     }
   }
-
-  // 3) 活端点已锁定：其余槽位逐个验证，报出可用/被拒清单
-  const rejected = []
-  for (const s of uniq(slots)) {
-    try {
-      const res = await fetch(live.url, {
-        method: 'POST', headers: { ...live.headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyOf(live.kind, s.model)), signal: AbortSignal.timeout(10000),
-      })
-      const text = await res.text().catch(() => '')
-      if (res.ok) {
-        const others = rejected.map((r) => `${r.label}「${r.model}」`).join('、')
-        return {
-          ok: true,
-          message: `连接成功（POST ${pathOf(live.url)}，${s.label}可用）${others ? `；但 ${others} 不受支持` : ''}`,
-        }
-      }
-      if (res.status === 400 && isModelIssue(text)) rejected.push({ ...s, msg: extractMsg(text).slice(0, 80) })
-      else return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(live.url)}）：${extractMsg(text).slice(0, 120)}` }
-    } catch (e) {
-      return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
-    }
-  }
-
+  if (authReject) return { ok: false, message: `鉴权失败（${[...new Set(tried)].join('、')}），请检查 API Token` }
   return {
     ok: false,
-    message: `接口已通（POST ${pathOf(live.url)}），但已填模型均不受支持：${rejected.map((r) => `${r.label}「${r.model}」— ${r.msg}`).join('；')}。请核对模型槽位填的是服务支持的模型 ID`,
+    message: `接口 404（已试 ${[...new Set(tried)].join('、')}）。Base URL 通常填到 /v1 为止，如 https://host/anthropic/v1`,
   }
 })
 
