@@ -12,14 +12,14 @@ export const workflows = [
       { id: 'n1', lane: 'input', name: '收集竞品动态', agent: '数据采集 Bot', status: 'done', duration: '2m 14s',
         events: [
           { t: 'think', text: '周报要最新动态，优先抓官网 changelog 与定价页，RSS 作降级补充。' },
-          { t: 'tool', kind: 'MCP', name: '网页搜索 MCP', args: 'query="竞品 定价 变更" · 近 7 天', ms: '3.2s', result: '返回 14 条结果，去重后 9 条有效' },
+          { t: 'tool', kind: 'MCP', name: '网页搜索 MCP', args: 'query="竞品 定价 变更"，近 7 天', ms: '3.2s', result: '返回 14 条结果，去重后 9 条有效' },
           { t: 'tool', kind: 'MCP', name: '飞书消息 MCP', args: '读取「竞品动态」频道近 7 天消息', ms: '1.1s', result: '拉取 23 条' },
           { t: 'text', text: '共扫描 12 个信息源，抓取 47 条更新，去重后保留 31 条待清洗。' },
         ],
       },
       { id: 'n2', lane: 'core', name: '竞品数据清洗', agent: '数据清洗 Bot', status: 'done', duration: '1m 02s',
         events: [
-          { t: 'shell', name: 'clean.py', cmd: 'python clean.py --src raw/ --dedupe --min-confidence 0.8', ms: '2.8s', result: 'exit 0 · 保留 31 条，剔除 4 条低置信' },
+          { t: 'shell', name: 'clean.py', cmd: 'python clean.py --src raw/ --dedupe --min-confidence 0.8', ms: '2.8s', result: 'exit 0，保留 31 条，剔除 4 条低置信' },
           { t: 'think', text: '剔除的 4 条均来自转载源，与一手信息重复，不影响覆盖面。' },
           { t: 'text', text: '清洗完成：31 条规范化记录已写入下游输入。' },
         ],
@@ -27,8 +27,8 @@ export const workflows = [
       { id: 'n3', lane: 'core', name: '多维度对比分析', agent: '分析 Bot', status: 'done', duration: '1m 45s',
         events: [
           { t: 'think', text: '按定价 / 渠道 / 功能三维建矩阵，逐项填充并标注变化幅度。' },
-          { t: 'skill', name: '图表规范选型', args: '数据关系=对比 · 品牌=FlowPilot', ms: '0.9s', result: '推荐：分组条形图 + 对比矩阵表' },
-          { t: 'tool', kind: 'MCP', name: '数据仓库查询 MCP', args: 'SELECT plan, price FROM competitors', ms: '2.1s', result: '12 行 · 86ms' },
+          { t: 'skill', name: '图表规范选型', args: '数据关系=对比，品牌=FlowPilot', ms: '0.9s', result: '推荐：分组条形图 + 对比矩阵表' },
+          { t: 'tool', kind: 'MCP', name: '数据仓库查询 MCP', args: 'SELECT plan, price FROM competitors', ms: '2.1s', result: '12 行，86ms' },
           { t: 'text', text: '关键发现：竞品 A 定价下调 12%，竞品 B 新增 2 个分销渠道，竞品 C 无功能变化。' },
         ],
       },
@@ -54,14 +54,14 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "数据仓库查询 MCP",
-                args: "初始化分析环境 · 加载竞品 A 全维度历史数据",
+                args: "初始化分析环境，加载竞品 A 全维度历史数据",
                 ms: "2.3s",
-                result: "数据集加载完成 · 1,247 行 × 23 列"
+                result: "数据集加载完成，1,247 行 × 23 列"
         },
         {
                 t: "skill",
                 name: "图表规范选型",
-                args: "分析类型=深度归因 · 受众=战略决策层",
+                args: "分析类型=深度归因，受众=战略决策层",
                 ms: "0.6s",
                 result: "分析框架：MECE + Porter 五力 + 价值链"
         },
@@ -73,32 +73,32 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 1 · 转化漏斗 · 采集 27 个数据点 · 时间窗 第 1 周",
+                args: "轮次 1，转化漏斗，采集 27 个数据点，时间窗 第 1 周",
                 ms: "2.3s",
-                result: "采集完成 · 27 条记录 · 异常值 0 条已标记"
+                result: "采集完成，27 条记录，异常值 0 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 2 · 用户行为 · 采集 49 个数据点 · 时间窗 第 1 周",
+                args: "轮次 2，用户行为，采集 49 个数据点，时间窗 第 1 周",
                 ms: "2.1s",
-                result: "采集完成 · 49 条记录 · 异常值 0 条已标记"
+                result: "采集完成，49 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-3",
                 cmd: "analyze --dimension \"竞争格局\" --round 3 --data-points 35 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.9s",
-                result: "exit 0 · 轮次 3 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 3 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 4 · 渠道效率 · 采集 49 个数据点 · 时间窗 第 1 周",
+                args: "轮次 4，渠道效率，采集 49 个数据点，时间窗 第 1 周",
                 ms: "2.3s",
-                result: "采集完成 · 49 条记录 · 异常值 2 条已标记"
+                result: "采集完成，49 条记录，异常值 2 条已标记"
         },
         {
                 t: "think",
@@ -109,30 +109,30 @@ export const workflows = [
                 name: "analysis-round-6",
                 cmd: "analyze --dimension \"财务影响\" --round 6 --data-points 24 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.9s",
-                result: "exit 0 · 轮次 6 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 6 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 7 · 风险评估 · 采集 44 个数据点 · 时间窗 第 1 周",
+                args: "轮次 7，风险评估，采集 44 个数据点，时间窗 第 1 周",
                 ms: "2.1s",
-                result: "采集完成 · 44 条记录 · 异常值 0 条已标记"
+                result: "采集完成，44 条记录，异常值 0 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 8 · 定价分析 · 采集 36 个数据点 · 时间窗 第 1 周",
+                args: "轮次 8，定价分析，采集 36 个数据点，时间窗 第 1 周",
                 ms: "2.4s",
-                result: "采集完成 · 36 条记录 · 异常值 1 条已标记"
+                result: "采集完成，36 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-9",
                 cmd: "analyze --dimension \"转化漏斗\" --round 9 --data-points 36 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.7s",
-                result: "exit 0 · 轮次 9 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 9 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "think",
@@ -140,76 +140,76 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 10 轮】用户行为维度分析完成。累计处理 150 个数据点，识别出 3 个核心驱动因素。当前分析进度 10%，预计还需 90 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 10 轮】用户行为维度分析完成。累计处理 150 个数据点，识别出 3 个核心驱动因素。当前分析进度 10%，预计还需 90 轮完成全部维度交叉验证。"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 11 · 竞争格局 · 采集 28 个数据点 · 时间窗 第 2 周",
+                args: "轮次 11，竞争格局，采集 28 个数据点，时间窗 第 2 周",
                 ms: "1.9s",
-                result: "采集完成 · 28 条记录 · 异常值 2 条已标记"
+                result: "采集完成，28 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-12",
                 cmd: "analyze --dimension \"渠道效率\" --round 12 --data-points 58 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.8s",
-                result: "exit 0 · 轮次 12 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 12 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 13 · 品牌声量 · 采集 51 个数据点 · 时间窗 第 2 周",
+                args: "轮次 13，品牌声量，采集 51 个数据点，时间窗 第 2 周",
                 ms: "0.8s",
-                result: "采集完成 · 51 条记录 · 异常值 1 条已标记"
+                result: "采集完成，51 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 14 · 财务影响 · 采集 44 个数据点 · 时间窗 第 2 周",
+                args: "轮次 14，财务影响，采集 44 个数据点，时间窗 第 2 周",
                 ms: "1.1s",
-                result: "采集完成 · 44 条记录 · 异常值 2 条已标记"
+                result: "采集完成，44 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-15",
                 cmd: "analyze --dimension \"风险评估\" --round 15 --data-points 57 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.2s",
-                result: "exit 0 · 轮次 15 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 15 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 16 · 定价分析 · 采集 14 个数据点 · 时间窗 第 2 周",
+                args: "轮次 16，定价分析，采集 14 个数据点，时间窗 第 2 周",
                 ms: "1.6s",
-                result: "采集完成 · 14 条记录 · 异常值 1 条已标记"
+                result: "采集完成，14 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 17 · 转化漏斗 · 采集 51 个数据点 · 时间窗 第 2 周",
+                args: "轮次 17，转化漏斗，采集 51 个数据点，时间窗 第 2 周",
                 ms: "2.1s",
-                result: "采集完成 · 51 条记录 · 异常值 2 条已标记"
+                result: "采集完成，51 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-18",
                 cmd: "analyze --dimension \"用户行为\" --round 18 --data-points 13 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.7s",
-                result: "exit 0 · 轮次 18 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 18 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 19 · 竞争格局 · 采集 39 个数据点 · 时间窗 第 2 周",
+                args: "轮次 19，竞争格局，采集 39 个数据点，时间窗 第 2 周",
                 ms: "2.0s",
-                result: "采集完成 · 39 条记录 · 异常值 0 条已标记"
+                result: "采集完成，39 条记录，异常值 0 条已标记"
         },
         {
                 t: "think",
@@ -217,7 +217,7 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 20 轮】渠道效率维度分析完成。累计处理 300 个数据点，识别出 4 个核心驱动因素。当前分析进度 20%，预计还需 80 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 20 轮】渠道效率维度分析完成。累计处理 300 个数据点，识别出 4 个核心驱动因素。当前分析进度 20%，预计还需 80 轮完成全部维度交叉验证。"
         },
         {
                 t: "ask",
@@ -234,30 +234,30 @@ export const workflows = [
                 name: "analysis-round-21",
                 cmd: "analyze --dimension \"品牌声量\" --round 21 --data-points 50 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.0s",
-                result: "exit 0 · 轮次 21 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 21 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 22 · 财务影响 · 采集 23 个数据点 · 时间窗 第 3 周",
+                args: "轮次 22，财务影响，采集 23 个数据点，时间窗 第 3 周",
                 ms: "1.3s",
-                result: "采集完成 · 23 条记录 · 异常值 2 条已标记"
+                result: "采集完成，23 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 23 · 风险评估 · 采集 24 个数据点 · 时间窗 第 3 周",
+                args: "轮次 23，风险评估，采集 24 个数据点，时间窗 第 3 周",
                 ms: "0.6s",
-                result: "采集完成 · 24 条记录 · 异常值 0 条已标记"
+                result: "采集完成，24 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-24",
                 cmd: "analyze --dimension \"定价分析\" --round 24 --data-points 58 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.6s",
-                result: "exit 0 · 轮次 24 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 24 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "think",
@@ -267,74 +267,74 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 26 · 用户行为 · 采集 17 个数据点 · 时间窗 第 3 周",
+                args: "轮次 26，用户行为，采集 17 个数据点，时间窗 第 3 周",
                 ms: "2.3s",
-                result: "采集完成 · 17 条记录 · 异常值 1 条已标记"
+                result: "采集完成，17 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-27",
                 cmd: "analyze --dimension \"竞争格局\" --round 27 --data-points 59 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.8s",
-                result: "exit 0 · 轮次 27 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 27 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 28 · 渠道效率 · 采集 33 个数据点 · 时间窗 第 3 周",
+                args: "轮次 28，渠道效率，采集 33 个数据点，时间窗 第 3 周",
                 ms: "1.2s",
-                result: "采集完成 · 33 条记录 · 异常值 1 条已标记"
+                result: "采集完成，33 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 29 · 品牌声量 · 采集 12 个数据点 · 时间窗 第 3 周",
+                args: "轮次 29，品牌声量，采集 12 个数据点，时间窗 第 3 周",
                 ms: "1.7s",
-                result: "采集完成 · 12 条记录 · 异常值 1 条已标记"
+                result: "采集完成，12 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-30",
                 cmd: "analyze --dimension \"财务影响\" --round 30 --data-points 40 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.3s",
-                result: "exit 0 · 轮次 30 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 30 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 30 轮】财务影响维度分析完成。累计处理 450 个数据点，识别出 5 个核心驱动因素。当前分析进度 30%，预计还需 70 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 30 轮】财务影响维度分析完成。累计处理 450 个数据点，识别出 5 个核心驱动因素。当前分析进度 30%，预计还需 70 轮完成全部维度交叉验证。"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 31 · 风险评估 · 采集 43 个数据点 · 时间窗 第 4 周",
+                args: "轮次 31，风险评估，采集 43 个数据点，时间窗 第 4 周",
                 ms: "0.5s",
-                result: "采集完成 · 43 条记录 · 异常值 1 条已标记"
+                result: "采集完成，43 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 32 · 定价分析 · 采集 24 个数据点 · 时间窗 第 4 周",
+                args: "轮次 32，定价分析，采集 24 个数据点，时间窗 第 4 周",
                 ms: "1.1s",
-                result: "采集完成 · 24 条记录 · 异常值 0 条已标记"
+                result: "采集完成，24 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-33",
                 cmd: "analyze --dimension \"转化漏斗\" --round 33 --data-points 57 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.6s",
-                result: "exit 0 · 轮次 33 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 33 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 34 · 用户行为 · 采集 44 个数据点 · 时间窗 第 4 周",
+                args: "轮次 34，用户行为，采集 44 个数据点，时间窗 第 4 周",
                 ms: "0.9s",
-                result: "采集完成 · 44 条记录 · 异常值 2 条已标记"
+                result: "采集完成，44 条记录，异常值 2 条已标记"
         },
         {
                 t: "think",
@@ -345,30 +345,30 @@ export const workflows = [
                 name: "analysis-round-36",
                 cmd: "analyze --dimension \"渠道效率\" --round 36 --data-points 14 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.7s",
-                result: "exit 0 · 轮次 36 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 36 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 37 · 品牌声量 · 采集 52 个数据点 · 时间窗 第 4 周",
+                args: "轮次 37，品牌声量，采集 52 个数据点，时间窗 第 4 周",
                 ms: "0.6s",
-                result: "采集完成 · 52 条记录 · 异常值 2 条已标记"
+                result: "采集完成，52 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 38 · 财务影响 · 采集 47 个数据点 · 时间窗 第 4 周",
+                args: "轮次 38，财务影响，采集 47 个数据点，时间窗 第 4 周",
                 ms: "1.4s",
-                result: "采集完成 · 47 条记录 · 异常值 1 条已标记"
+                result: "采集完成，47 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-39",
                 cmd: "analyze --dimension \"风险评估\" --round 39 --data-points 20 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.3s",
-                result: "exit 0 · 轮次 39 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 39 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "think",
@@ -376,76 +376,76 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 40 轮】定价分析维度分析完成。累计处理 600 个数据点，识别出 6 个核心驱动因素。当前分析进度 40%，预计还需 60 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 40 轮】定价分析维度分析完成。累计处理 600 个数据点，识别出 6 个核心驱动因素。当前分析进度 40%，预计还需 60 轮完成全部维度交叉验证。"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 41 · 转化漏斗 · 采集 17 个数据点 · 时间窗 第 5 周",
+                args: "轮次 41，转化漏斗，采集 17 个数据点，时间窗 第 5 周",
                 ms: "1.3s",
-                result: "采集完成 · 17 条记录 · 异常值 1 条已标记"
+                result: "采集完成，17 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-42",
                 cmd: "analyze --dimension \"用户行为\" --round 42 --data-points 18 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.5s",
-                result: "exit 0 · 轮次 42 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 42 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 43 · 竞争格局 · 采集 30 个数据点 · 时间窗 第 5 周",
+                args: "轮次 43，竞争格局，采集 30 个数据点，时间窗 第 5 周",
                 ms: "0.7s",
-                result: "采集完成 · 30 条记录 · 异常值 2 条已标记"
+                result: "采集完成，30 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 44 · 渠道效率 · 采集 27 个数据点 · 时间窗 第 5 周",
+                args: "轮次 44，渠道效率，采集 27 个数据点，时间窗 第 5 周",
                 ms: "0.7s",
-                result: "采集完成 · 27 条记录 · 异常值 1 条已标记"
+                result: "采集完成，27 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-45",
                 cmd: "analyze --dimension \"品牌声量\" --round 45 --data-points 31 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.8s",
-                result: "exit 0 · 轮次 45 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 45 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 46 · 财务影响 · 采集 52 个数据点 · 时间窗 第 5 周",
+                args: "轮次 46，财务影响，采集 52 个数据点，时间窗 第 5 周",
                 ms: "0.7s",
-                result: "采集完成 · 52 条记录 · 异常值 1 条已标记"
+                result: "采集完成，52 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 47 · 风险评估 · 采集 34 个数据点 · 时间窗 第 5 周",
+                args: "轮次 47，风险评估，采集 34 个数据点，时间窗 第 5 周",
                 ms: "0.5s",
-                result: "采集完成 · 34 条记录 · 异常值 1 条已标记"
+                result: "采集完成，34 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-48",
                 cmd: "analyze --dimension \"定价分析\" --round 48 --data-points 22 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.3s",
-                result: "exit 0 · 轮次 48 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 48 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 49 · 转化漏斗 · 采集 30 个数据点 · 时间窗 第 5 周",
+                args: "轮次 49，转化漏斗，采集 30 个数据点，时间窗 第 5 周",
                 ms: "2.4s",
-                result: "采集完成 · 30 条记录 · 异常值 2 条已标记"
+                result: "采集完成，30 条记录，异常值 2 条已标记"
         },
         {
                 t: "think",
@@ -453,37 +453,37 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 50 轮】用户行为维度分析完成。累计处理 750 个数据点，识别出 7 个核心驱动因素。当前分析进度 50%，预计还需 50 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 50 轮】用户行为维度分析完成。累计处理 750 个数据点，识别出 7 个核心驱动因素。当前分析进度 50%，预计还需 50 轮完成全部维度交叉验证。"
         },
         {
                 t: "shell",
                 name: "analysis-round-51",
                 cmd: "analyze --dimension \"竞争格局\" --round 51 --data-points 54 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.1s",
-                result: "exit 0 · 轮次 51 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 51 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 52 · 渠道效率 · 采集 15 个数据点 · 时间窗 第 6 周",
+                args: "轮次 52，渠道效率，采集 15 个数据点，时间窗 第 6 周",
                 ms: "1.5s",
-                result: "采集完成 · 15 条记录 · 异常值 1 条已标记"
+                result: "采集完成，15 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 53 · 品牌声量 · 采集 46 个数据点 · 时间窗 第 6 周",
+                args: "轮次 53，品牌声量，采集 46 个数据点，时间窗 第 6 周",
                 ms: "1.4s",
-                result: "采集完成 · 46 条记录 · 异常值 0 条已标记"
+                result: "采集完成，46 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-54",
                 cmd: "analyze --dimension \"财务影响\" --round 54 --data-points 49 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.4s",
-                result: "exit 0 · 轮次 54 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 54 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "think",
@@ -493,43 +493,43 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 56 · 定价分析 · 采集 29 个数据点 · 时间窗 第 6 周",
+                args: "轮次 56，定价分析，采集 29 个数据点，时间窗 第 6 周",
                 ms: "1.2s",
-                result: "采集完成 · 29 条记录 · 异常值 2 条已标记"
+                result: "采集完成，29 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-57",
                 cmd: "analyze --dimension \"转化漏斗\" --round 57 --data-points 32 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.1s",
-                result: "exit 0 · 轮次 57 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 57 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 58 · 用户行为 · 采集 11 个数据点 · 时间窗 第 6 周",
+                args: "轮次 58，用户行为，采集 11 个数据点，时间窗 第 6 周",
                 ms: "1.1s",
-                result: "采集完成 · 11 条记录 · 异常值 2 条已标记"
+                result: "采集完成，11 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 59 · 竞争格局 · 采集 29 个数据点 · 时间窗 第 6 周",
+                args: "轮次 59，竞争格局，采集 29 个数据点，时间窗 第 6 周",
                 ms: "1.5s",
-                result: "采集完成 · 29 条记录 · 异常值 0 条已标记"
+                result: "采集完成，29 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-60",
                 cmd: "analyze --dimension \"渠道效率\" --round 60 --data-points 16 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.6s",
-                result: "exit 0 · 轮次 60 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 60 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 60 轮】渠道效率维度分析完成。累计处理 900 个数据点，识别出 8 个核心驱动因素。当前分析进度 60%，预计还需 40 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 60 轮】渠道效率维度分析完成。累计处理 900 个数据点，识别出 8 个核心驱动因素。当前分析进度 60%，预计还需 40 轮完成全部维度交叉验证。"
         },
         {
                 t: "ask",
@@ -545,32 +545,32 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 61 · 品牌声量 · 采集 52 个数据点 · 时间窗 第 7 周",
+                args: "轮次 61，品牌声量，采集 52 个数据点，时间窗 第 7 周",
                 ms: "2.2s",
-                result: "采集完成 · 52 条记录 · 异常值 2 条已标记"
+                result: "采集完成，52 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 62 · 财务影响 · 采集 10 个数据点 · 时间窗 第 7 周",
+                args: "轮次 62，财务影响，采集 10 个数据点，时间窗 第 7 周",
                 ms: "1.4s",
-                result: "采集完成 · 10 条记录 · 异常值 2 条已标记"
+                result: "采集完成，10 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-63",
                 cmd: "analyze --dimension \"风险评估\" --round 63 --data-points 41 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.7s",
-                result: "exit 0 · 轮次 63 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 63 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 64 · 定价分析 · 采集 55 个数据点 · 时间窗 第 7 周",
+                args: "轮次 64，定价分析，采集 55 个数据点，时间窗 第 7 周",
                 ms: "2.2s",
-                result: "采集完成 · 55 条记录 · 异常值 2 条已标记"
+                result: "采集完成，55 条记录，异常值 2 条已标记"
         },
         {
                 t: "think",
@@ -581,30 +581,30 @@ export const workflows = [
                 name: "analysis-round-66",
                 cmd: "analyze --dimension \"用户行为\" --round 66 --data-points 11 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.9s",
-                result: "exit 0 · 轮次 66 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 66 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 67 · 竞争格局 · 采集 59 个数据点 · 时间窗 第 7 周",
+                args: "轮次 67，竞争格局，采集 59 个数据点，时间窗 第 7 周",
                 ms: "1.3s",
-                result: "采集完成 · 59 条记录 · 异常值 2 条已标记"
+                result: "采集完成，59 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 68 · 渠道效率 · 采集 27 个数据点 · 时间窗 第 7 周",
+                args: "轮次 68，渠道效率，采集 27 个数据点，时间窗 第 7 周",
                 ms: "2.2s",
-                result: "采集完成 · 27 条记录 · 异常值 1 条已标记"
+                result: "采集完成，27 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-69",
                 cmd: "analyze --dimension \"品牌声量\" --round 69 --data-points 10 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.6s",
-                result: "exit 0 · 轮次 69 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 69 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "think",
@@ -612,76 +612,76 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 70 轮】财务影响维度分析完成。累计处理 1050 个数据点，识别出 9 个核心驱动因素。当前分析进度 70%，预计还需 30 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 70 轮】财务影响维度分析完成。累计处理 1050 个数据点，识别出 9 个核心驱动因素。当前分析进度 70%，预计还需 30 轮完成全部维度交叉验证。"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 71 · 风险评估 · 采集 11 个数据点 · 时间窗 第 8 周",
+                args: "轮次 71，风险评估，采集 11 个数据点，时间窗 第 8 周",
                 ms: "0.7s",
-                result: "采集完成 · 11 条记录 · 异常值 0 条已标记"
+                result: "采集完成，11 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-72",
                 cmd: "analyze --dimension \"定价分析\" --round 72 --data-points 34 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.5s",
-                result: "exit 0 · 轮次 72 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 72 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 73 · 转化漏斗 · 采集 13 个数据点 · 时间窗 第 8 周",
+                args: "轮次 73，转化漏斗，采集 13 个数据点，时间窗 第 8 周",
                 ms: "1.2s",
-                result: "采集完成 · 13 条记录 · 异常值 0 条已标记"
+                result: "采集完成，13 条记录，异常值 0 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 74 · 用户行为 · 采集 17 个数据点 · 时间窗 第 8 周",
+                args: "轮次 74，用户行为，采集 17 个数据点，时间窗 第 8 周",
                 ms: "2.3s",
-                result: "采集完成 · 17 条记录 · 异常值 2 条已标记"
+                result: "采集完成，17 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-75",
                 cmd: "analyze --dimension \"竞争格局\" --round 75 --data-points 25 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.5s",
-                result: "exit 0 · 轮次 75 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 75 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 76 · 渠道效率 · 采集 40 个数据点 · 时间窗 第 8 周",
+                args: "轮次 76，渠道效率，采集 40 个数据点，时间窗 第 8 周",
                 ms: "2.5s",
-                result: "采集完成 · 40 条记录 · 异常值 0 条已标记"
+                result: "采集完成，40 条记录，异常值 0 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 77 · 品牌声量 · 采集 35 个数据点 · 时间窗 第 8 周",
+                args: "轮次 77，品牌声量，采集 35 个数据点，时间窗 第 8 周",
                 ms: "1.7s",
-                result: "采集完成 · 35 条记录 · 异常值 0 条已标记"
+                result: "采集完成，35 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-78",
                 cmd: "analyze --dimension \"财务影响\" --round 78 --data-points 32 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.7s",
-                result: "exit 0 · 轮次 78 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 78 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 79 · 风险评估 · 采集 33 个数据点 · 时间窗 第 8 周",
+                args: "轮次 79，风险评估，采集 33 个数据点，时间窗 第 8 周",
                 ms: "1.9s",
-                result: "采集完成 · 33 条记录 · 异常值 1 条已标记"
+                result: "采集完成，33 条记录，异常值 1 条已标记"
         },
         {
                 t: "think",
@@ -689,37 +689,37 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 80 轮】定价分析维度分析完成。累计处理 1200 个数据点，识别出 10 个核心驱动因素。当前分析进度 80%，预计还需 20 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 80 轮】定价分析维度分析完成。累计处理 1200 个数据点，识别出 10 个核心驱动因素。当前分析进度 80%，预计还需 20 轮完成全部维度交叉验证。"
         },
         {
                 t: "shell",
                 name: "analysis-round-81",
                 cmd: "analyze --dimension \"转化漏斗\" --round 81 --data-points 34 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.2s",
-                result: "exit 0 · 轮次 81 分析完成 · 置信度 95% · 发现 1 个显著信号"
+                result: "exit 0，轮次 81 分析完成，置信度 95%，发现 1 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 82 · 用户行为 · 采集 30 个数据点 · 时间窗 第 9 周",
+                args: "轮次 82，用户行为，采集 30 个数据点，时间窗 第 9 周",
                 ms: "2.2s",
-                result: "采集完成 · 30 条记录 · 异常值 1 条已标记"
+                result: "采集完成，30 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 83 · 竞争格局 · 采集 42 个数据点 · 时间窗 第 9 周",
+                args: "轮次 83，竞争格局，采集 42 个数据点，时间窗 第 9 周",
                 ms: "2.5s",
-                result: "采集完成 · 42 条记录 · 异常值 0 条已标记"
+                result: "采集完成，42 条记录，异常值 0 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-84",
                 cmd: "analyze --dimension \"渠道效率\" --round 84 --data-points 32 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.8s",
-                result: "exit 0 · 轮次 84 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 84 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "think",
@@ -729,74 +729,74 @@ export const workflows = [
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 86 · 财务影响 · 采集 27 个数据点 · 时间窗 第 9 周",
+                args: "轮次 86，财务影响，采集 27 个数据点，时间窗 第 9 周",
                 ms: "1.8s",
-                result: "采集完成 · 27 条记录 · 异常值 1 条已标记"
+                result: "采集完成，27 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-87",
                 cmd: "analyze --dimension \"风险评估\" --round 87 --data-points 34 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.4s",
-                result: "exit 0 · 轮次 87 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 87 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 88 · 定价分析 · 采集 34 个数据点 · 时间窗 第 9 周",
+                args: "轮次 88，定价分析，采集 34 个数据点，时间窗 第 9 周",
                 ms: "1.3s",
-                result: "采集完成 · 34 条记录 · 异常值 0 条已标记"
+                result: "采集完成，34 条记录，异常值 0 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 89 · 转化漏斗 · 采集 48 个数据点 · 时间窗 第 9 周",
+                args: "轮次 89，转化漏斗，采集 48 个数据点，时间窗 第 9 周",
                 ms: "0.8s",
-                result: "采集完成 · 48 条记录 · 异常值 1 条已标记"
+                result: "采集完成，48 条记录，异常值 1 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-90",
                 cmd: "analyze --dimension \"用户行为\" --round 90 --data-points 16 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.1s",
-                result: "exit 0 · 轮次 90 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 90 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 90 轮】用户行为维度分析完成。累计处理 1350 个数据点，识别出 11 个核心驱动因素。当前分析进度 90%，预计还需 10 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 90 轮】用户行为维度分析完成。累计处理 1350 个数据点，识别出 11 个核心驱动因素。当前分析进度 90%，预计还需 10 轮完成全部维度交叉验证。"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 91 · 竞争格局 · 采集 27 个数据点 · 时间窗 第 10 周",
+                args: "轮次 91，竞争格局，采集 27 个数据点，时间窗 第 10 周",
                 ms: "2.3s",
-                result: "采集完成 · 27 条记录 · 异常值 2 条已标记"
+                result: "采集完成，27 条记录，异常值 2 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 92 · 渠道效率 · 采集 46 个数据点 · 时间窗 第 10 周",
+                args: "轮次 92，渠道效率，采集 46 个数据点，时间窗 第 10 周",
                 ms: "2.4s",
-                result: "采集完成 · 46 条记录 · 异常值 2 条已标记"
+                result: "采集完成，46 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-93",
                 cmd: "analyze --dimension \"品牌声量\" --round 93 --data-points 10 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "3.6s",
-                result: "exit 0 · 轮次 93 分析完成 · 置信度 95% · 发现 2 个显著信号"
+                result: "exit 0，轮次 93 分析完成，置信度 95%，发现 2 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 94 · 财务影响 · 采集 59 个数据点 · 时间窗 第 10 周",
+                args: "轮次 94，财务影响，采集 59 个数据点，时间窗 第 10 周",
                 ms: "1.9s",
-                result: "采集完成 · 59 条记录 · 异常值 1 条已标记"
+                result: "采集完成，59 条记录，异常值 1 条已标记"
         },
         {
                 t: "think",
@@ -807,30 +807,30 @@ export const workflows = [
                 name: "analysis-round-96",
                 cmd: "analyze --dimension \"定价分析\" --round 96 --data-points 13 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "2.4s",
-                result: "exit 0 · 轮次 96 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 96 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "网页搜索 MCP",
-                args: "轮次 97 · 转化漏斗 · 采集 57 个数据点 · 时间窗 第 10 周",
+                args: "轮次 97，转化漏斗，采集 57 个数据点，时间窗 第 10 周",
                 ms: "1.2s",
-                result: "采集完成 · 57 条记录 · 异常值 1 条已标记"
+                result: "采集完成，57 条记录，异常值 1 条已标记"
         },
         {
                 t: "tool",
                 kind: "MCP",
                 name: "飞书消息 MCP",
-                args: "轮次 98 · 用户行为 · 采集 48 个数据点 · 时间窗 第 10 周",
+                args: "轮次 98，用户行为，采集 48 个数据点，时间窗 第 10 周",
                 ms: "1.1s",
-                result: "采集完成 · 48 条记录 · 异常值 2 条已标记"
+                result: "采集完成，48 条记录，异常值 2 条已标记"
         },
         {
                 t: "shell",
                 name: "analysis-round-99",
                 cmd: "analyze --dimension \"竞争格局\" --round 99 --data-points 20 --method \"bayesian-inference\" --confidence 0.95",
                 ms: "1.6s",
-                result: "exit 0 · 轮次 99 分析完成 · 置信度 95% · 发现 3 个显著信号"
+                result: "exit 0，轮次 99 分析完成，置信度 95%，发现 3 个显著信号"
         },
         {
                 t: "think",
@@ -838,7 +838,7 @@ export const workflows = [
         },
         {
                 t: "text",
-                text: "【阶段结论 · 第 100 轮】渠道效率维度分析完成。累计处理 1500 个数据点，识别出 12 个核心驱动因素。当前分析进度 100%，预计还需 0 轮完成全部维度交叉验证。"
+                text: "【阶段结论，第 100 轮】渠道效率维度分析完成。累计处理 1500 个数据点，识别出 12 个核心驱动因素。当前分析进度 100%，预计还需 0 轮完成全部维度交叉验证。"
         },
         {
                 t: "think",
@@ -854,7 +854,7 @@ export const workflows = [
                 name: "飞书消息 MCP",
                 args: "上传深度分析报告到「竞品周报」文件夹 + 通知战略组",
                 ms: "2.1s",
-                result: "上传成功 · 已触达 5 人"
+                result: "上传成功，已触达 5 人"
         },
         {
                 t: "text",
@@ -866,9 +866,9 @@ export const workflows = [
         events: [
           { t: 'think', text: '周报结构：一、核心结论（3 句话）；二、竞品动态明细（按竞品分组）；三、数据附录（图表+表格）；四、建议行动项。控制在 2 屏以内，管理层没时间看长文。' },
           { t: 'tool', kind: 'MCP', name: '数据仓库查询 MCP', args: '拉取三竞品全维度数据', ms: '3.4s', result: '156 行' },
-          { t: 'skill', name: '平台风格改写', args: '平台=飞书 · 风格=管理层周报 · 字数≤800', ms: '1.2s', result: '输出模板已生成' },
+          { t: 'skill', name: '平台风格改写', args: '平台=飞书，风格=管理层周报，字数≤800', ms: '1.2s', result: '输出模板已生成' },
           { t: 'text', text: '周报草稿完成（756 字）：\n\n【竞品周报·第 43 周】\n\n一、核心结论\n1. 竞品 A 降价 12% 并锁定年付，转化率跃升 18pp，策略已验证有效\n2. 竞品 B 新增 2 个分销渠道，流量结构正在重构\n3. 竞品 C 服务退步（响应时长翻倍），用户满意度跌破 4.0\n\n二、竞品动态明细\n竞品 A：入门套餐 ¥99→¥87，取消月付，仅保留年付/季付。年付转化率 23%→41%。\n竞品 B：新增抖音小店+快手电商分销，价格体系不变，关注渠道流量占比变化。\n竞品 C：客服响应 4h→8h，满意度 4.2→3.8，建议关注其用户流失数据。\n\n三、数据附录\n图 1：三维度对比（分组条形图）\n图 2：价格变化热力图（标注 A 第 8 周暴跌）\n图 3：竞品 A 年付转化率趋势线\n\n四、建议行动项\n1. 监控竞品 A 降价后的我方用户流失率（建议本周内启动）\n2. 评估是否跟进年付定价策略\n3. 关注竞品 B 分销渠道的获客成本变化\n\n（全文 756 字，预计阅读 2 分钟）' },
-          { t: 'tool', kind: 'MCP', name: '飞书消息 MCP', args: '发送周报到「竞品周报」群 + @张总 @李总', ms: '1.8s', result: '发送成功 · 已触达 2 人' },
+          { t: 'tool', kind: 'MCP', name: '飞书消息 MCP', args: '发送周报到「竞品周报」群 + @张总 @李总', ms: '1.8s', result: '发送成功，已触达 2 人' },
           { t: 'text', text: '周报已推送到飞书群。' },
         ],
       },
@@ -940,7 +940,7 @@ export const workflows = [
       { id: 'n1', lane: 'input', name: '读取发布单', agent: '文档解析 Bot', status: 'done', duration: '0m 20s', log: ['版本 v2.6.0'] },
       { id: 'n2', lane: 'core', name: '核对回归范围', agent: 'QA Bot', status: 'running', duration: '进行中',
         events: [
-          { t: 'tool', kind: 'MCP', name: '数据仓库查询 MCP', args: '用例关联查询 · release=v2.6.0', ms: '1.4s', result: '关联 86 条用例' },
+          { t: 'tool', kind: 'MCP', name: '数据仓库查询 MCP', args: '用例关联查询，release=v2.6.0', ms: '1.4s', result: '关联 86 条用例' },
           { t: 'think', text: '按模块聚合，优先核对支付与权益两个高风险模块。' },
           { t: 'shell', name: 'qa-check', cmd: 'qa-check --module payment --release v2.6.0', ms: '运行中', result: '42 / 86 条已核对…' },
           { t: 'text', text: '支付模块核对完成，权益模块核对中……' },

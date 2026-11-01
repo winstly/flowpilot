@@ -7,15 +7,15 @@ export default function ConfirmDialog({ open, onOpenChange, title, description, 
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="radix-overlay fixed inset-0 z-50" />
-        <Dialog.Content className="radix-content fixed left-1/2 top-1/2 z-[60] w-[400px] max-w-[calc(100vw-40px)] -translate-x-1/2 -translate-y-1/2 p-6">
+        <Dialog.Content className="radix-content fixed left-1/2 top-[max(80px,15vh)] z-[60] w-[400px] max-w-[calc(100vw-40px)] -translate-x-1/2 p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <span className="flex size-9 flex-none items-center justify-center rounded-full bg-fail-soft text-fail">
                 <TriangleAlert size={17} />
               </span>
               <div>
-                <Dialog.Title className="text-[16px] font-semibold text-ink">{title}</Dialog.Title>
-                <Dialog.Description className="mt-1 text-[13px] leading-relaxed text-ink2">
+                <Dialog.Title className="text-sm font-semibold text-ink">{title}</Dialog.Title>
+                <Dialog.Description className="mt-1 text-sm leading-relaxed text-ink2">
                   {description}
                 </Dialog.Description>
               </div>

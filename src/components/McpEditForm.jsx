@@ -108,7 +108,7 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
             </button>
           ))}
         </div>
-        <span className={`chip flex-none !py-0.5 !text-[10.5px] ${syncing ? 'chip-neutral' : 'chip-accent'}`}>
+        <span className={`chip flex-none !py-0.5 !text-xs ${syncing ? 'chip-neutral' : 'chip-accent'}`}>
           <span className={`size-1.5 rounded-full ${syncing ? 'bg-mute animate-pulse' : 'bg-ok'}`} />
           {syncing ? '同步中…' : `已同步 ${tools.length} 个工具`}
         </span>
@@ -126,24 +126,24 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
             </Field>
             {transport ? (
               <Field label="服务器地址" required hint="远程服务接入地址">
-                <input className="field font-mono !text-[12.5px]" placeholder="https://mcp.internal/…" value={form.url} onChange={(e) => set({ url: e.target.value })} />
+                <input className="field font-mono !text-xs" placeholder="https://mcp.internal/…" value={form.url} onChange={(e) => set({ url: e.target.value })} />
               </Field>
             ) : (
               <>
                 <Field label="启动命令" required hint="stdio 类型必填">
-                  <input className="field font-mono !text-[12.5px]" placeholder="npx" value={form.command} onChange={(e) => set({ command: e.target.value })} />
+                  <input className="field font-mono !text-xs" placeholder="npx" value={form.command} onChange={(e) => set({ command: e.target.value })} />
                 </Field>
                 <Field label="命令行参数" hint="空格分隔">
-                  <input className="field font-mono !text-[12.5px]" placeholder="-y @org/mcp-server" value={form.args} onChange={(e) => set({ args: e.target.value })} />
+                  <input className="field font-mono !text-xs" placeholder="-y @org/mcp-server" value={form.args} onChange={(e) => set({ args: e.target.value })} />
                 </Field>
                 <Field label="环境变量" hint="每行一条，格式 k=v（密钥保存后掩码显示）">
-                  <textarea className="field resize-none font-mono !text-[12px]" rows={3} placeholder={'API_KEY=sk-...'} value={form.env} onChange={(e) => set({ env: e.target.value })} />
+                  <textarea className="field resize-none font-mono !text-xs" rows={3} placeholder={'API_KEY=sk-...'} value={form.env} onChange={(e) => set({ env: e.target.value })} />
                 </Field>
               </>
             )}
             {transport && (
               <Field label="请求头" hint="每行一条，格式 k=v">
-                <textarea className="field resize-none font-mono !text-[12px]" rows={2} placeholder={'Authorization=Bearer ...'} value={form.headers} onChange={(e) => set({ headers: e.target.value })} />
+                <textarea className="field resize-none font-mono !text-xs" rows={2} placeholder={'Authorization=Bearer ...'} value={form.headers} onChange={(e) => set({ headers: e.target.value })} />
               </Field>
             )}
           </>
@@ -160,7 +160,7 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
               </Field>
             </div>
             <Field label="使用指南" hint="注入给模型的 server instructions">
-              <textarea className="field resize-none !text-[12.5px]" rows={4} placeholder="描述这个服务器的能力与使用建议…" value={form.instructions} onChange={(e) => set({ instructions: e.target.value })} />
+              <textarea className="field resize-none !text-xs" rows={4} placeholder="描述这个服务器的能力与使用建议…" value={form.instructions} onChange={(e) => set({ instructions: e.target.value })} />
             </Field>
           </>
         )}
@@ -184,19 +184,19 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
         </div>
 
         {/* 工具列表：服务端自动加载，只读 */}
-        <div className="rounded-[10px] border border-line">
+        <div className="rounded-btn border border-line">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-ink">
               <Terminal size={13} className="text-mute" />
               工具列表
-              <span className="chip chip-neutral !py-0 !text-[10px]">自动从 MCP Server 加载</span>
+              <span className="chip chip-neutral !py-0 !text-xs">自动从 MCP Server 加载</span>
             </div>
             <button className="iconbtn !size-7" title="重新同步" aria-label="重新同步工具列表" disabled={syncing} onClick={sync}>
               <RefreshCw size={13} className={syncing ? 'animate-spin' : ''} />
             </button>
           </div>
           {tools.length === 0 ? (
-            <div className="px-4 py-5 text-center text-[12px] text-mute">
+            <div className="px-4 py-5 text-center text-xs text-mute">
               尚未同步到工具，保存连接信息后可重新同步
             </div>
           ) : (
@@ -207,15 +207,15 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
                     className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-canvas"
                     onClick={() => setOpenTool(openTool === t.name ? null : t.name)}
                   >
-                    <span className="font-mono text-[12.5px] font-semibold text-ink">{t.name}</span>
-                    <span className="flex-1 truncate text-[11.5px] text-mute">{t.desc}</span>
-                    <span className="flex-none text-[11px] text-mute">{t.params.length} 参数</span>
+                    <span className="font-mono text-xs font-semibold text-ink">{t.name}</span>
+                    <span className="flex-1 truncate text-xs text-mute">{t.desc}</span>
+                    <span className="flex-none text-xs text-mute">{t.params.length} 参数</span>
                     <ChevronDown size={13} className={`flex-none text-mute transition-transform ${openTool === t.name ? 'rotate-180' : ''}`} />
                   </button>
                   {openTool === t.name && (
                     <div className="anim-drop bg-canvas px-4 py-2.5">
                       {t.params.map((p) => (
-                        <div key={p.name} className="flex items-baseline gap-2 py-0.5 text-[11.5px]">
+                        <div key={p.name} className="flex items-baseline gap-2 py-0.5 text-xs">
                           <span className="font-mono text-ink">{p.name}</span>
                           <span className="text-mute">{p.type}</span>
                           {p.required && <span className="text-warn">必填</span>}
@@ -247,9 +247,9 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
 function Field({ label, hint, required, children }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+      <label className="mb-1.5 block text-sm font-medium text-ink">
         {label} {required && <span className="text-fail">*</span>}
-        {hint && <span className="ml-2 text-[11px] font-normal text-mute">{hint}</span>}
+        {hint && <span className="ml-2 text-xs font-normal text-mute">{hint}</span>}
       </label>
       {children}
     </div>

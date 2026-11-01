@@ -31,12 +31,12 @@ export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, d
       <Dialog.Portal>
         {/* 运行页是 z-50 全屏层，此弹窗从那里唤起：遮罩/内容须压过 z-50，否则背后不变暗 */}
         <Dialog.Overlay className="radix-overlay fixed inset-0 z-[60]" />
-        <Dialog.Content className="radix-content osd-shell fixed left-1/2 top-1/2 z-[70] flex max-h-[90vh] w-[480px] max-w-[calc(100vw-40px)] -translate-x-1/2 -translate-y-1/2 flex-col p-0">
+        <Dialog.Content className="radix-content osd-shell fixed left-1/2 top-[max(80px,15vh)] z-[70] flex max-h-[82vh] w-[480px] max-w-[calc(100vw-40px)] -translate-x-1/2 flex-col p-0">
          <div className="dlg-body p-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">发布申请</div>
-              <Dialog.Title className="text-[16px] font-semibold text-ink">向团队发布 Workflow</Dialog.Title>
+              <div className="mb-1 block-label">发布申请</div>
+              <Dialog.Title className="text-sm font-semibold text-ink">向团队发布 Workflow</Dialog.Title>
             </div>
             <Dialog.Close asChild>
               <button className="iconbtn" aria-label="关闭"><X size={16} /></button>
@@ -44,28 +44,28 @@ export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, d
           </div>
 
           {/* AI 生成提示 */}
-          <div className="mt-4 flex items-center gap-2 rounded-[9px] bg-brand-soft px-3.5 py-2.5 text-[12.5px] text-brand-deep">
+          <div className="mt-4 flex items-center gap-2 rounded-btn bg-brand-soft px-3.5 py-2.5 text-xs text-brand-deep">
             <Sparkles size={14} className="flex-none" />
             AI 已生成发布信息，确认或微调后提交即可。
           </div>
 
           <div className="mt-4 space-y-4">
             <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-ink">名称 <span className="text-fail">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-ink">名称 <span className="text-fail">*</span></label>
               <input
                 className="field" maxLength={40}
                 value={pub.name} onChange={(e) => setPub({ ...pub, name: e.target.value })}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-ink">说明</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink">说明</label>
               <textarea
                 className="field resize-none" rows={3} maxLength={200}
                 value={pub.desc} onChange={(e) => setPub({ ...pub, desc: e.target.value })}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-ink">标签</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink">标签</label>
               <TagInput
                 value={pub.tags}
                 onChange={(tags) => setPub({ ...pub, tags })}

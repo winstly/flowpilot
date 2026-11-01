@@ -48,15 +48,15 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
   const copyReport = () => {
     const lines = [
       `【FlowPilot 复盘报告】${task.title}（${task.id}）`,
-      `状态：${TASK_STATUS[task.status].label} · 节点完成 ${doneCount}/${task.board.length} · 纠正 ${task.corrections} 次` +
-        (overall != null ? ` · 主 Agent 整体评分 ${overall}/5` : ''),
+      `状态：${TASK_STATUS[task.status].label}，节点完成 ${doneCount}/${task.board.length}，纠正 ${task.corrections} 次` +
+        (overall != null ? `，主 Agent 整体评分 ${overall}/5` : ''),
       ...(weakNode?.corrections ? [`薄弱节点：${weakNode.name}（${weakNode.corrections} 次纠正）`] : []),
       ...(reworkTotal ? [`打回重跑：${reworkTotal} 次，均已复评`] : []),
       '',
       '节点 Agent 评分：',
       ...task.board.map((n) => {
         const s = nodeScoreOf(n)
-        return `  ${n.name}（${n.agent}）：${s != null ? `${s}/5` : '未评估'}${n.reworkCount ? ` · 打回重跑 ${n.reworkCount} 次` : ''}`
+        return `  ${n.name}（${n.agent}）：${s != null ? `${s}/5` : '未评估'}${n.reworkCount ? `（打回重跑 ${n.reworkCount} 次）` : ''}`
       }),
     ]
     navigator.clipboard?.writeText(lines.join('\n'))
@@ -67,26 +67,26 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
   return (
     <>
       <div className="fixed inset-0 z-[55] bg-[rgba(23,26,33,.52)] backdrop-blur-[3px]" onClick={onClose} aria-hidden />
-      <div className="radix-content osd-shell fixed left-1/2 top-1/2 z-[60] flex max-h-[88vh] w-[660px] max-w-[calc(100vw-40px)] -translate-x-1/2 -translate-y-1/2 flex-col p-0">
+      <div className="radix-content osd-shell fixed left-1/2 top-[max(80px,15vh)] z-[60] flex max-h-[82vh] w-[660px] max-w-[calc(100vw-40px)] -translate-x-1/2 flex-col p-0">
        <div className="dlg-body">
         {/* 头部 */}
         <div className="flex items-start justify-between gap-3 px-6 pt-5">
           <div className="min-w-0">
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">任务复盘报告</div>
-            <h2 className="truncate text-[16px] font-semibold text-ink">{task.title}</h2>
+            <div className="mb-1 block-label">任务复盘报告</div>
+            <h2 className="truncate text-sm font-semibold text-ink">{task.title}</h2>
           </div>
           <button className="iconbtn flex-none" onClick={onClose} aria-label="关闭报告"><X size={16} /></button>
         </div>
 
         {/* 指标条：关键数字只在这里出现一次 */}
-        <div className="mx-6 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-[10px] bg-canvas px-4 py-2.5">
+        <div className="mx-6 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-btn bg-canvas px-4 py-2.5">
           <span className={`badge ${TASK_STATUS[task.status].cls}`}>{TASK_STATUS[task.status].label}</span>
           <Stat label="节点完成" value={`${doneCount}/${task.board.length}`} />
           <Stat label="纠正" value={`${task.corrections} 次`} warn={task.corrections > 0} />
           {weakNode?.corrections > 0 && <Stat label="薄弱环节" value={weakNode.name} warn />}
           {openReviews.length > 0 && <Stat label="待确认" value={`${openReviews.length} 项`} warn />}
           {reworkTotal > 0 && <Stat label="打回重跑" value={`${reworkTotal} 次`} warn />}
-          <span className="ml-auto flex items-baseline gap-1.5 text-[12px]">
+          <span className="ml-auto flex items-baseline gap-1.5 text-xs">
             <span className="text-mute">主 Agent 整体评分</span>
             {overall != null
               ? <span className="font-medium text-ink">★ {overall}</span>
@@ -114,11 +114,11 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
           <div key={tab} className="anim-swap">
           {tab === 'nodes' && (
             <div>
-              <p className="mb-4 rounded-[10px] bg-canvas px-4 py-3 text-[13px] leading-relaxed text-ink2">{summaryText}</p>
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">
+              <p className="mb-4 rounded-btn bg-canvas px-4 py-3 text-sm leading-relaxed text-ink2">{summaryText}</p>
+              <div className="mb-2 block-label">
                 节点表现（按纠正次数排序）
               </div>
-            <div className="overflow-hidden rounded-[10px] border border-line">
+            <div className="overflow-hidden rounded-btn border border-line">
               {nodesByWeak.map((n) => {
                 const weak = weakNode?.corrections > 0 && n.id === weakNode.id
                 const score = nodeScoreOf(n)
@@ -126,11 +126,11 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                   <div key={n.id} className={`border-b border-line px-3.5 py-2.5 last:border-b-0 ${weak ? 'bg-warn-soft/60' : ''}`}>
                     {/* 行 1：节点名 + Agent 评分 + 状态（打回重跑是主 Agent 判定的执行历史，仅展示） */}
                     <div className="flex items-center gap-2.5">
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink" title={`${n.name} · ${n.agent}`}>{n.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink" title={`${n.name} ${n.agent}`}>{n.name}</span>
                       <span className="flex flex-none items-center gap-1" title="主 Agent 评分">
                         {score != null
                           ? <Stars value={score} size={12} />
-                          : <span className="text-[11px] text-mute">未评估</span>}
+                          : <span className="text-xs text-mute">未评估</span>}
                       </span>
                       {n.reworkCount > 0 && (
                         <span className="badge badge-warn flex-none" title={`主 Agent 判定需重跑：${n.reworkReason}`}>
@@ -140,9 +140,8 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                       <span className={`badge ${nodeStatus(n).cls} flex-none`}>{nodeStatus(n).label}</span>
                     </div>
                     {/* 行 2：执行元信息 */}
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11.5px] text-mute">
+                    <div className="meta-line mt-1">
                       <span>{n.agent}</span>
-                      <span className="text-line">·</span>
                       <span>{n.duration}</span>
                       {n.corrections > 0 && (
                         <span className="flex items-center gap-0.5 text-amber"><MessageSquareWarning size={11} />纠正 {n.corrections} 次</span>
@@ -156,16 +155,16 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
           )}
           {tab === 'reviews' && (
             <div>
-              <div className="mb-3 text-[13px] leading-relaxed text-ink2">
+              <div className="mb-3 text-sm leading-relaxed text-ink2">
                 以下审查点尚无结论，确认后下游节点才能继续。
               </div>
               {openReviews.map((n) => (
-                  <div key={n.id} className="mb-3 rounded-[10px] border border-line p-3.5 last:mb-0">
-                    <div className="mb-1.5 flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                  <div key={n.id} className="mb-3 rounded-btn border border-line p-3.5 last:mb-0">
+                    <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-ink">
                       <UserCheck size={13} className="text-warn" />
                       {n.name}
                     </div>
-                    <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink2">{n.review.report}</p>
+                    <p className="mb-2.5 text-xs leading-relaxed text-ink2">{n.review.report}</p>
                     <AskUserQuestion
                       questions={n.review.questions}
                       onAnswer={(qid, opt) => {
@@ -181,36 +180,35 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
           {tab === 'feedback' && (
             <div>
               {/* 主 Agent 最终评分：结合整体表现与打回重跑复评，给出综合打分 */}
-              <div className="mb-5 rounded-[10px] border border-line p-4">
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">
+              <div className="mb-5 rounded-btn border border-line p-4">
+                <div className="mb-2 block-label">
                   主 Agent 最终评分
                 </div>
                 <div className="flex items-center gap-2.5">
                   {overall != null
                     ? <Stars value={overall} size={18} />
-                    : <span className="text-[13px] text-mute">评估中…</span>}
-                  <span className="text-[12px] leading-relaxed text-ink2">
+                    : <span className="text-sm text-mute">评估中…</span>}
+                  <span className="text-xs leading-relaxed text-ink2">
                     {overall != null
                       ? `综合 ${scoredNodes.length} 个已执行节点的 Agent 评分${reworkTotal ? `，含 ${reworkTotal} 次打回重跑的复评` : ''}。`
                       : '节点尚未全部执行完成，评分待生成。'}
                   </span>
                 </div>
                 {scoredNodes.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-mute">
-                    {scoredNodes.map((n, i) => (
-                      <span key={n.id} className="flex items-center gap-2">
-                        {n.name} <b className="font-medium text-ink2">{nodeScoreOf(n)}</b>
-                        {i < scoredNodes.length - 1 && <span className="text-line">·</span>}
+                  <div className="meta-line mt-2.5">
+                    {scoredNodes.map((n) => (
+                      <span key={n.id}>
+                        {n.name} <b className="font-semibold text-ink">{nodeScoreOf(n)}</b>
                       </span>
                     ))}
                   </div>
                 )}
               </div>
 
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">
+              <div className="mb-2 block-label">
                 你的评分与建议
               </div>
-              <div className="rounded-[10px] border border-line p-3.5">
+              <div className="rounded-btn border border-line p-3.5">
             <div className="flex items-center gap-1" onMouseLeave={() => setHoverStar(0)}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <button
@@ -235,7 +233,7 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                 </button>
               ))}
               {task.userRating && (
-                <span className="ml-2 text-[12px] text-ink2">已评 {task.userRating}/5</span>
+                <span className="ml-2 text-xs text-ink2">已评 {task.userRating}/5</span>
               )}
             </div>
             <textarea
@@ -280,7 +278,7 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
 // 复盘指标条单项：label + 值；warn 时值用警示色（纠正/薄弱/待确认）
 function Stat({ label, value, warn }) {
   return (
-    <span className="flex items-baseline gap-1.5 text-[12px]">
+    <span className="flex items-baseline gap-1.5 text-xs">
       <span className="text-mute">{label}</span>
       <span className={`max-w-[140px] truncate font-medium ${warn ? 'text-warn' : 'text-ink'}`}>{value}</span>
     </span>

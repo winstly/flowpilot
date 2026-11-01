@@ -36,7 +36,7 @@ const blankForm = {
   mcps: [], skills: [],
 }
 
-// Agent 卡片网格：与资源卡同构（类型 chip + 状态徽章 / 作者·版本 / 描述 / 评分·调用 / 收藏·编辑·版本）
+// Agent 卡片网格：与资源卡同构（类型 chip + 状态徽章 / 作者版本遥测 / 描述 / 评分调用 / 收藏 编辑 版本）
 export default function AgentGrid({ list, setList, q, favs, onToggleFav, registerOpenNew }) {
   const [editing, setEditing] = useState(null) // agent 对象或 'new'
   const [form, setForm] = useState(blankForm)
@@ -138,7 +138,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
           return (
             <article
               key={a.id}
-              className="panel anim-rise flex flex-col p-4 transition-all duration-[180ms] hover:border-brand-line2 hover:shadow-[0_4px_14px_rgba(75,110,246,.08)]"
+              className="panel anim-rise flex flex-col p-4 transition-all duration-[180ms] hover:border-brand-line2 hover:shadow-pop"
               style={{ animationDelay: `${Math.min(i, 11) * 30}ms` }}
             >
               <div className="flex items-center justify-between gap-2">
@@ -146,24 +146,22 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                 <span className={`badge ${statusBadgeCls(status)}`}>{status}</span>
               </div>
               <h3
-                className="mt-3 cursor-pointer truncate text-[14.5px] font-semibold leading-6 text-ink transition-colors duration-[180ms] hover:text-brand-deep"
+                className="mt-3 cursor-pointer truncate text-sm font-semibold leading-6 text-ink transition-colors duration-[180ms] hover:text-brand-deep"
                 onClick={() => setDetailRes({ ...a, kind: 'Agent', status: a.status || '正常' })}
                 title={a.name}
               >
                 {a.name}
               </h3>
-              <p className="mt-1 text-xs text-mute">{a.owner} · {a.version}</p>
-              <p className="mt-2 h-10 overflow-hidden text-[13px] leading-5 text-ink2">{a.desc}</p>
+              <div className="meta-line mt-1"><span>{a.owner}</span><span>{a.version}</span></div>
+              <p className="mt-2 h-10 overflow-hidden text-sm leading-5 text-ink2">{a.desc}</p>
               <div className="mt-3 flex items-center gap-2.5">
-                {a.rating > 0 ? <Stars value={a.rating} /> : <span className="text-xs text-mute">暂无评分</span>}
-                <span className="flex items-center gap-1 text-xs text-mute">
-                  <Wrench size={11} />
-                  {a.tools} 个工具
-                </span>
-                <span className="flex-1" />
-                <span className="chip chip-neutral !py-0.5 !text-[11px]">{a.category}</span>
+                <div className="meta-line flex-1">
+                  <span>{a.rating > 0 ? <Stars value={a.rating} /> : '暂无评分'}</span>
+                  <span><Wrench size={11} />{a.tools} 个工具</span>
+                </div>
+                <span className="chip chip-neutral !py-0.5 !text-xs">{a.category}</span>
                 {a.capabilities.length > 0 && (
-                  <span className="chip chip-neutral !py-0.5 !text-[11px]">{a.capabilities[0]}</span>
+                  <span className="chip chip-neutral !py-0.5 !text-xs">{a.capabilities[0]}</span>
                 )}
               </div>
               <div className="mt-3.5 flex items-center justify-between border-t border-line pt-3">
@@ -176,18 +174,18 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                   {faved ? '已收藏' : '收藏'}
                 </button>
                 <div className="flex items-center gap-1.5">
-                  <button className="btn-outline !py-1.5 !px-2.5" onClick={() => setDetailRes({ ...a, kind: 'Agent', status: a.status || '正常' })}>
-                    <Eye size={13} />查看
-                  </button>
-                  <button className="btn-outline !py-1.5 !px-2.5" onClick={() => openEdit(a)}>
+                  <button className="btn-ghost !px-2.5 !text-xs" onClick={() => openEdit(a)}>
                     <Pencil size={13} />编辑
                   </button>
                   <button
-                    className="btn-outline !py-1.5 !px-2.5 !text-fail hover:!border-fail hover:!bg-fail-soft"
+                    className="btn-danger-ghost !px-2.5 !text-xs"
                     aria-label={`删除 ${a.name}`}
                     onClick={() => setConfirmDel(a)}
                   >
                     <Trash2 size={13} />删除
+                  </button>
+                  <button className="btn-outline !py-1.5 !px-2.5 !text-xs" onClick={() => setDetailRes({ ...a, kind: 'Agent', status: a.status || '正常' })}>
+                    <Eye size={13} />查看
                   </button>
                 </div>
               </div>
@@ -195,7 +193,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
           )
         })}
         {filtered.length === 0 && (
-          <div className="panel col-span-full py-12 text-center text-[13px] text-mute">没有匹配的 Agent</div>
+          <div className="panel col-span-full py-12 text-center text-sm text-mute">没有匹配的 Agent</div>
         )}
       </div>
 
@@ -203,15 +201,15 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
       <Dialog.Root open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <Dialog.Portal>
           <Dialog.Overlay className="radix-overlay fixed inset-0 z-40" />
-          <Dialog.Content className="radix-content osd-shell fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[560px] max-w-[calc(100vw-40px)] -translate-x-1/2 -translate-y-1/2 flex-col p-0">
+          <Dialog.Content className="radix-content osd-shell fixed left-1/2 top-[max(80px,15vh)] z-50 flex max-h-[82vh] w-[560px] max-w-[calc(100vw-40px)] -translate-x-1/2 flex-col p-0">
            <div className="dlg-body">
             {/* 标准头部：eyebrow + 标题 + 右上关闭 */}
             <div className="flex items-start justify-between gap-3 px-6 pt-5">
               <div className="min-w-0">
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">
+                <div className="mb-1 block-label">
                   {editing === 'new' ? '新建 Agent' : '编辑 Agent'}
                 </div>
-                <Dialog.Title className="text-[16px] font-semibold text-ink">
+                <Dialog.Title className="text-sm font-semibold text-ink">
                   {editing === 'new' ? '定义一个执行者' : isEdit(editing) ? editing.name : ''}
                   {isEdit(editing) && <span className="ml-2 text-xs font-normal text-mute">{editing.version}</span>}
                 </Dialog.Title>
@@ -225,7 +223,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
             <div className="space-y-4">
               {/* 基本信息：与其他类型的申请发布 / 新建字段一致 */}
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                <label className="mb-1.5 block text-sm font-medium text-ink">
                   名称 <span className="text-fail">*</span>
                 </label>
                 <input
@@ -235,13 +233,13 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                   value={form.name}
                   onChange={(e) => { setForm({ ...form, name: e.target.value }); setNameErr(false) }}
                 />
-                <div className={`mt-1 min-h-[14px] text-[11px] ${nameErr ? 'text-fail' : ''}`}>
+                <div className={`mt-1 min-h-[14px] text-xs ${nameErr ? 'text-fail' : ''}`}>
                   {nameErr ? '名称为必填项' : ''}
                 </div>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">说明</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">说明</label>
                 <textarea
                   className="field resize-none" rows={3} maxLength={200}
                   placeholder="它解决什么问题、适用什么场景…"
@@ -251,7 +249,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">标签</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">标签</label>
                 <TagInput
                   value={form.tags}
                   onChange={(tags) => setForm({ ...form, tags })}
@@ -261,7 +259,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
 
               {/* Agent 专属配置 */}
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">分类</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">分类</label>
                 <Select.Root
                   value={form.category}
                   onValueChange={(v) => setForm({ ...form, category: v })}
@@ -274,7 +272,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                     <Select.Content className="radix-pop" position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
                         {AGENT_CATEGORIES.map((c) => (
-                          <Select.Item key={c} value={c} className="radix-item rounded-[8px]">
+                          <Select.Item key={c} value={c} className="radix-item rounded-btn">
                             <Select.ItemText>{c}</Select.ItemText>
                           </Select.Item>
                         ))}
@@ -285,7 +283,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">建议模型挡位</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">建议模型挡位</label>
                 <Select.Root
                   value={form.model}
                   onValueChange={(v) => setForm({ ...form, model: v })}
@@ -298,7 +296,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                     <Select.Content className="radix-pop" position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
                         {MODEL_TIERS.map((m) => (
-                          <Select.Item key={m} value={m} className="radix-item rounded-[8px]">
+                          <Select.Item key={m} value={m} className="radix-item rounded-btn">
                             <Select.ItemText>{m}</Select.ItemText>
                           </Select.Item>
                         ))}
@@ -309,7 +307,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">MCP 工具（已选 {form.mcps.length}）</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">MCP 工具（已选 {form.mcps.length}）</label>
                 <ResourcePicker
                   options={mcpOptions}
                   selected={form.mcps}
@@ -319,7 +317,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">Skill（已选 {form.skills.length}）</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">Skill（已选 {form.skills.length}）</label>
                 <ResourcePicker
                   options={skillOptions}
                   selected={form.skills}
@@ -330,7 +328,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[13px] font-medium text-ink">System Prompt</label>
+                <label className="mb-1.5 block text-sm font-medium text-ink">System Prompt</label>
                 <textarea
                   className="field resize-none font-mono !text-xs" rows={3}
                   placeholder="定义这个 Agent 的角色、边界与输出约束…"
@@ -339,7 +337,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                 />
               </div>
 
-              <p className="flex items-center gap-1 text-[11px] text-mute">
+              <p className="flex items-center gap-1 text-xs text-mute">
                 <Info size={11} />
                 历史版本可在「查看」详情顶部切换，内容随版本变化。
               </p>
@@ -395,15 +393,15 @@ const isEdit = (editing) => !!editing && editing !== 'new'
 function ChipGroup({ label, options, picked, onChange }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[13px] font-medium text-ink">{label}</label>
-      <div className="flex max-h-[88px] flex-wrap gap-1.5 overflow-y-auto rounded-[10px] border border-line p-2.5">
+      <label className="mb-1.5 block text-sm font-medium text-ink">{label}</label>
+      <div className="flex max-h-[88px] flex-wrap gap-1.5 overflow-y-auto rounded-btn border border-line p-2.5">
         {options.map((o) => {
           const on = picked.includes(o)
           return (
             <button
               key={o}
               type="button"
-              className={`chip ${on ? 'chip-solid' : 'chip-neutral'}`}
+              className={`chip ${on ? 'chip-accent' : 'chip-neutral'}`}
               onClick={() => onChange(on ? picked.filter((x) => x !== o) : [...picked, o])}
             >
               {on && <X size={10} strokeWidth={3} />}
@@ -412,7 +410,7 @@ function ChipGroup({ label, options, picked, onChange }) {
           )
         })}
       </div>
-      <p className="mt-1 flex items-center gap-1 text-[11px] text-mute">
+      <p className="mt-1 flex items-center gap-1 text-xs text-mute">
         <Info size={11} />
         点击切换绑定状态
       </p>

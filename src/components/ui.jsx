@@ -7,21 +7,16 @@ export function statusBadgeCls(status) {
 
 // 详情/编辑弹窗统一的 tab 按钮样式（下划线式，激活项加品牌描边）
 export const tabItemCls = (active) =>
-  `px-3 py-2 text-[12.5px] font-medium transition-colors ${
+  `px-3 py-2 text-sm font-medium transition-colors ${
     active ? 'border-b-2 border-brand text-brand-deep' : 'text-mute hover:text-ink'
   }`
 
-// 页头：eyebrow 小标 → 大标题 → 副标题
-export function PageHeader({ eyebrow, title, subtitle, actions }) {
+// 页头：只有标题 + 操作。结构信息交给布局本身，不再堆 eyebrow 与说明书副标题
+// （desktop-agent-ui 铁律 2：Let the layout do the explaining）
+export function PageHeader({ title, actions }) {
   return (
-    <header className="mb-7 flex items-end justify-between gap-4">
-      <div>
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink2">
-          {eyebrow}
-        </div>
-        <h1 className="text-[26px] font-semibold leading-tight text-ink">{title}</h1>
-        {subtitle && <p className="mt-1.5 text-sm text-ink2">{subtitle}</p>}
-      </div>
+    <header className="mb-7 flex items-center justify-between gap-4">
+      <h1 className="text-2xl font-semibold leading-tight tracking-tight text-ink">{title}</h1>
       {actions && <div className="flex items-center gap-2.5">{actions}</div>}
     </header>
   )
@@ -31,21 +26,17 @@ export function Badge({ node, children }) {
   return <span className={`badge ${node.cls}`}>{children ?? node.label}</span>
 }
 
-export function MetricCard({ icon: Icon, label, value, sub }) {
+// 遥测读数条：KPI 不再用仪表盘磁贴堆砌，收敛为一行等宽数字读数
+// （数字走 mono + tabular-nums，分隔线由 .meta-line 的发丝刻度线提供）
+export function TelemetryLine({ items, className = '' }) {
   return (
-    <div className="panel flex items-center gap-3.5 px-5 py-4">
-      {Icon && (
-        <span className="flex size-10 flex-none items-center justify-center rounded-[10px] bg-brand-soft text-brand">
-          <Icon size={19} strokeWidth={1.8} />
-        </span>
-      )}
-      <div className="min-w-0">
-        <div className="text-[22px] font-semibold leading-tight text-ink">{value}</div>
-        <div className="mt-0.5 truncate text-xs text-ink2">
+    <div className={`meta-line ${className}`}>
+      {items.map(({ value, label }, i) => (
+        <span key={i}>
           {label}
-          {sub && <span className="ml-1.5 text-mute">{sub}</span>}
-        </div>
-      </div>
+          <b className="font-semibold text-ink">{value}</b>
+        </span>
+      ))}
     </div>
   )
 }
@@ -54,7 +45,7 @@ export function Stars({ value, size = 13 }) {
   return (
     <span className="inline-flex items-center gap-1" title={`${value} 分`}>
       <Star size={size} className="fill-amber text-amber" />
-      <span className="text-[12.5px] font-medium text-ink">{Number(value).toFixed(1)}</span>
+      <span className="font-mono text-xs font-medium tabular-nums text-ink">{Number(value).toFixed(1)}</span>
     </span>
   )
 }

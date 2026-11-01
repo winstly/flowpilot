@@ -15,8 +15,8 @@ const CONF = {
 
 function poolOf(type) {
   if (type === 'workflow') return workflows.map((w) => ({ id: w.id, name: w.name, cat: w.category, meta: `${w.nodes.length} 节点` }))
-  if (type === 'agent') return agents.map((a) => ({ id: a.id, name: a.name, cat: a.category, meta: `${a.version} · ${a.desc.slice(0, 18)}…` }))
-  if (type === 'skill') return resources.filter((r) => r.kind === 'Skill').map((r) => ({ id: r.id, name: r.name, cat: '通用能力', meta: `${r.version} · ${r.desc.slice(0, 18)}…` }))
+  if (type === 'agent') return agents.map((a) => ({ id: a.id, name: a.name, cat: a.category, meta: `${a.version} ${a.desc.slice(0, 18)}…` }))
+  if (type === 'skill') return resources.filter((r) => r.kind === 'Skill').map((r) => ({ id: r.id, name: r.name, cat: '通用能力', meta: `${r.version} ${r.desc.slice(0, 18)}…` }))
   if (type === 'dir') return directories.map((d) => ({ id: d, name: d, cat: '目录', meta: '团队/个人空间' }))
   return attachmentPool.map((f) => ({ id: f.name, name: f.name, cat: '文件', meta: f.size }))
 }
@@ -65,7 +65,7 @@ export default function ResourceDialog({ type, selected = [], onClose, onConfirm
       onCancel={(e) => { e.preventDefault(); close() }}
     >
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
-        <h2 className="text-[16px] font-semibold text-ink">{conf.title}</h2>
+        <h2 className="text-sm font-semibold text-ink">{conf.title}</h2>
         <button className="iconbtn" onClick={close} aria-label="关闭">
           <X size={16} />
         </button>
@@ -86,7 +86,7 @@ export default function ResourceDialog({ type, selected = [], onClose, onConfirm
           {cats.map((c) => (
             <button
               key={c}
-              className={`chip ${cat === c ? 'chip-solid' : 'chip-neutral'}`}
+              className={`chip ${cat === c ? 'chip-accent' : 'chip-neutral'}`}
               onClick={() => setCat(c)}
             >
               {c}
@@ -97,7 +97,7 @@ export default function ResourceDialog({ type, selected = [], onClose, onConfirm
 
       <div className="max-h-[300px] overflow-y-auto px-6 py-3">
         {list.length === 0 && (
-          <div className="py-10 text-center text-[13px] text-mute">没有匹配的资源</div>
+          <div className="py-10 text-center text-sm text-mute">没有匹配的资源</div>
         )}
         {list.map((p) => {
           const on = picked.includes(p.id)
@@ -105,15 +105,15 @@ export default function ResourceDialog({ type, selected = [], onClose, onConfirm
             <button
               key={p.id}
               onClick={() => toggle(p.id)}
-              className={`flex w-full items-center gap-3 rounded-[10px] border px-3 py-2.5 text-left transition-all duration-[180ms] ${
+              className={`flex w-full items-center gap-3 rounded-btn border px-3 py-2.5 text-left transition-all duration-[180ms] ${
                 on ? 'border-brand-line2 bg-brand-soft' : 'border-transparent hover:bg-mute-soft'
               }`}
             >
-              <span className="flex size-8 flex-none items-center justify-center rounded-[8px] bg-mute-soft text-ink2">
+              <span className="flex size-8 flex-none items-center justify-center rounded-btn bg-mute-soft text-ink2">
                 <FileText size={14} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] font-medium text-ink">{p.name}</span>
+                <span className="block truncate text-sm font-medium text-ink">{p.name}</span>
                 <span className="block truncate text-xs text-mute">{p.meta}</span>
               </span>
               <span

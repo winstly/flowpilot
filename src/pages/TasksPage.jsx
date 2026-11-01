@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import {
   Workflow, Bot, Puzzle, FolderOpen, Paperclip, X, TriangleAlert,
-  Clock, GitFork, MessageSquareWarning, SendHorizonal, Trash2, Share2,
+  Clock, GitFork, MessageSquareWarning, SendHorizonal, Trash2, Share,
 } from 'lucide-react'
 import { PageHeader, Badge } from '@/components/ui'
 import ResourceDialog from '@/components/ResourceDialog'
@@ -71,16 +71,12 @@ export default function TasksPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Workspace"
-        title="任务与对话"
-        subtitle="一句话创建任务，绑定工作流与执行资源，全程可对话纠错。"
-      />
+      <PageHeader title="任务与对话" />
 
       {/* 创建面板 */}
-      <div className="panel mx-auto w-full max-w-[760px] p-5 shadow-[0_1px_2px_rgba(15,20,40,.04)]">
+      <div className="panel mx-auto w-full max-w-[760px] p-5 shadow-card">
         <textarea
-          className="w-full resize-none bg-transparent text-[15px] leading-relaxed text-ink outline-none placeholder:text-[#a9aeb8]"
+          className="w-full resize-none bg-transparent text-sm leading-relaxed text-ink outline-none placeholder:text-faint"
           rows={4}
           maxLength={1200}
           placeholder="描述你要完成的任务，例如：生成 10 月第 4 周竞品周报，重点对比定价与渠道…"
@@ -94,7 +90,7 @@ export default function TasksPage() {
             </button>
           ))}
           <div className="flex-1" />
-          <span className="mr-2 text-[11.5px] text-mute">{text.length} / 1200</span>
+          <span className="mr-2 text-xs text-mute">{text.length} / 1200</span>
           <button className="btn-primary" onClick={create}>
             <SendHorizonal size={14} />
             创建任务
@@ -191,7 +187,7 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
 
   return (
     <section>
-      <h2 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-ink">
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
         {title}
         <span className="text-xs font-normal text-mute">{tasks.length} 条</span>
       </h2>
@@ -203,18 +199,18 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
             tabIndex={0}
             onClick={() => onOpen(t.id)}
             onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onOpen(t.id)}
-            className="panel anim-rise group flex cursor-pointer items-center gap-4 px-4 py-3.5 text-left transition-all duration-[180ms] hover:border-brand-line2 hover:shadow-[0_4px_14px_rgba(75,110,246,.08)] focus-visible:outline-2 focus-visible:outline-brand-line2"
+            className="panel anim-rise group flex cursor-pointer items-center gap-4 px-4 py-3.5 text-left transition-all duration-[180ms] hover:border-brand-line2 hover:shadow-pop focus-visible:outline-2 focus-visible:outline-brand-line2"
             style={{ animationDelay: `${Math.min(i, 11) * 30}ms` }}
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate text-[14px] font-medium text-ink">{t.title}</span>
+                <span className="truncate text-sm font-medium text-ink">{t.title}</span>
               </div>
-              <div className="mt-1.5 flex items-center gap-3.5 text-xs text-mute">
-                <span className="flex items-center gap-1"><Clock size={12} />{t.updatedAt}</span>
-                <span className="flex items-center gap-1"><GitFork size={12} />{t.board.length} 节点</span>
-                <span className="flex items-center gap-1">
-                  <MessageSquareWarning size={12} className={t.corrections ? 'text-amber' : ''} />
+              <div className="meta-line mt-1.5">
+                <span><Clock size={12} />{t.updatedAt}</span>
+                <span><GitFork size={12} />{t.board.length} 节点</span>
+                <span className={t.corrections ? 'text-amber' : ''}>
+                  <MessageSquareWarning size={12} />
                   {t.corrections} 纠正
                 </span>
               </div>
@@ -223,11 +219,11 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
             {/* 任务成功结束 → 提供发布到团队的入口 */}
             {t.status === 'done' && onPublish && (
               <button
-                className="btn-outline !py-1.5 !px-2.5 flex-none !text-[12px] !text-brand-deep"
+                className="btn-outline !py-1.5 !px-2.5 flex-none !text-xs"
                 title="把本次任务的 Workflow 发布到团队"
                 onClick={(e) => { e.stopPropagation(); onPublish(t) }}
               >
-                <Share2 size={12} />
+                <Share size={12} />
                 申请发布
               </button>
             )}
@@ -242,7 +238,7 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
           </div>
         ))}
         {tasks.length === 0 && (
-          <div className="panel px-4 py-8 text-center text-[13px] text-mute">暂无任务</div>
+          <div className="panel px-4 py-8 text-center text-sm text-mute">暂无任务</div>
         )}
       </div>
 

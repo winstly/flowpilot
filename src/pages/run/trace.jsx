@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   Brain, Wrench, Puzzle, SquareTerminal, FileText, MessageSquareWarning,
-  UserCheck, ChevronDown, Loader2, Check,
+  UserCheck, ChevronDown, LoaderCircle, Check,
 } from 'lucide-react'
 import AskUserQuestion from '@/components/AskUserQuestion'
 import { taskStore } from '@/store/taskStore'
 
 /* ---------- 执行轨迹：Agent 事件流（思考 / MCP / Skill / Shell / 输出 / 重试） ---------- */
 const EV_META = {
-  think: { Icon: Brain, label: '思考', title: '思考过程', color: 'text-purple-500', bg: 'bg-purple-50', ring: 'ring-purple-100' },
-  tool: { Icon: Wrench, label: 'MCP', title: 'MCP 调用', color: 'text-blue-500', bg: 'bg-blue-50', ring: 'ring-blue-100' },
-  skill: { Icon: Puzzle, label: 'Skill', title: 'Skill 调用', color: 'text-teal-500', bg: 'bg-teal-50', ring: 'ring-teal-100' },
-  shell: { Icon: SquareTerminal, label: 'Shell', title: '执行脚本', color: 'text-slate-500', bg: 'bg-slate-50', ring: 'ring-slate-100' },
-  text: { Icon: FileText, label: '输出', title: '模型回答', color: 'text-ink2', bg: 'bg-canvas', ring: 'ring-line' },
+  think: { Icon: Brain, label: '思考', title: '思考过程', color: 'text-mute', bg: 'bg-mute-soft', ring: 'ring-mute/20' },
+  tool: { Icon: Wrench, label: 'MCP', title: 'MCP 调用', color: 'text-info', bg: 'bg-info-soft', ring: 'ring-info/20' },
+  skill: { Icon: Puzzle, label: 'Skill', title: 'Skill 调用', color: 'text-info', bg: 'bg-info-soft', ring: 'ring-info/20' },
+  shell: { Icon: SquareTerminal, label: 'Shell', title: '执行脚本', color: 'text-info', bg: 'bg-info-soft', ring: 'ring-info/20' },
+  text: { Icon: FileText, label: '输出', title: '模型回答', color: 'text-ink2', bg: 'bg-subtle', ring: 'ring-line' },
   error: { Icon: MessageSquareWarning, label: '重试', title: '重试', color: 'text-warn', bg: 'bg-warn-soft', ring: 'ring-warn/20' },
   ask: { Icon: UserCheck, label: '待确认', title: '待用户确认', color: 'text-warn', bg: 'bg-warn-soft', ring: 'ring-warn/20' },
 }
@@ -138,22 +138,22 @@ export function TracePanel({ node, scrollRef, refresh }) {
     <div className="mt-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-mute">执行记录</span>
-          {streaming && <Loader2 size={11} className="animate-spin text-brand" />}
+          <span className="text-xs font-medium text-mute">执行记录</span>
+          {streaming && <LoaderCircle size={11} className="animate-spin text-brand" />}
         </div>
         {total > PAGE_SIZE && (
           <span className="flex items-center gap-0.5">
             <button
-              className="flex size-5 items-center justify-center rounded-[4px] text-mute transition-colors hover:bg-mute-soft hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex size-5 items-center justify-center rounded-sm text-mute transition-colors hover:bg-mute-soft hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               aria-label="上一页"
             >
               ‹
             </button>
-            <span className="px-1 text-[10px] tabular-nums text-ink2">{page} / {totalPages}</span>
+            <span className="px-1 text-xs tabular-nums text-ink2">{page} / {totalPages}</span>
             <button
-              className="flex size-5 items-center justify-center rounded-[4px] text-mute transition-colors hover:bg-mute-soft hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex size-5 items-center justify-center rounded-sm text-mute transition-colors hover:bg-mute-soft hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               aria-label="下一页"
@@ -194,21 +194,21 @@ export function TracePanel({ node, scrollRef, refresh }) {
                   className="flex w-full items-center gap-2 text-left"
                   onClick={() => toggle(idx)}
                 >
-                  <span className={`inline-flex flex-none items-center rounded-[4px] px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider ${meta.bg} ${meta.color}`}>
+                  <span className={`inline-flex flex-none items-center rounded-sm px-1.5 py-0.5 text-xs font-semibold ${meta.bg} ${meta.color}`}>
                     {meta.label}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium leading-[1.45] text-ink">
+                  <span className="min-w-0 flex-1 truncate text-xs font-medium leading-[1.45] text-ink">
                     {meta.title}
                     {isStreamingLast && <span className="animate-pulse text-brand">▍</span>}
                   </span>
-                  {e.ms && <span className="flex-none text-[10px] tabular-nums text-mute">{e.ms}</span>}
+                  {e.ms && <span className="flex-none text-xs tabular-nums text-mute">{e.ms}</span>}
                   <ChevronDown
                     size={10}
                     className={`flex-none text-mute transition-transform duration-[180ms] ${bodyOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {bodyOpen && (
-                  <div className="mt-1.5 text-[11.5px] leading-relaxed text-ink2">
+                  <div className="mt-1.5 text-xs leading-relaxed text-ink2">
                     {isAsk && e.questions && (
                       <AskUserQuestion
                         questions={e.questions}
@@ -239,16 +239,16 @@ export function TracePanel({ node, scrollRef, refresh }) {
                     )}
                     {e.t === 'error' && <span className="text-warn">{e.text}</span>}
                     {e.t === 'shell' && (
-                      <div className="rounded-[6px] bg-[#1e1e22] px-2.5 py-1.5">
-                        <div className="font-mono text-[11px] text-[#c9d1d9]">$ {e.cmd}</div>
-                        <div className="mt-0.5 font-mono text-[11px] text-[#8b949e]">{e.result}</div>
+                      <div className="rounded-sm bg-[#1e1e22] px-2.5 py-1.5">
+                        <div className="font-mono text-xs text-[#c9d1d9]">$ {e.cmd}</div>
+                        <div className="mt-0.5 font-mono text-xs text-[#8b949e]">{e.result}</div>
                       </div>
                     )}
                     {(e.t === 'tool' || e.t === 'skill') && (
                       <div>
-                        <div className="text-[11px] text-mute">{e.name}</div>
-                        <div className="mt-0.5 text-[11px] text-mute">{e.args}</div>
-                        <div className="mt-1 flex items-center gap-1 text-[11px] text-ok">
+                        <div className="text-xs text-mute">{e.name}</div>
+                        <div className="mt-0.5 text-xs text-mute">{e.args}</div>
+                        <div className="mt-1 flex items-center gap-1 text-xs text-ok">
                           <Check size={10} />
                           {e.result}
                         </div>
@@ -264,7 +264,7 @@ export function TracePanel({ node, scrollRef, refresh }) {
 
       {streaming && !follow && (
         <button
-          className="btn-outline mt-2 w-full justify-center !py-1.5 !text-[11.5px]"
+          className="btn-outline mt-2 w-full justify-center !py-1.5 !text-xs"
           onClick={() => {
             setFollow(true)
             const el = scrollRef.current

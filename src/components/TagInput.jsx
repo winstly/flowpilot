@@ -26,7 +26,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
         {value.map((t) => (
           <span
             key={t}
-            className="anim-pop inline-flex items-center gap-1 rounded-full border border-brand-line bg-brand-soft py-[3px] pl-2.5 pr-1 text-[12px] font-medium text-brand-deep"
+            className="anim-pop inline-flex items-center gap-1 rounded-full border border-brand-line bg-brand-soft py-[3px] pl-2.5 pr-1 text-xs font-medium text-brand-deep"
           >
             {t}
             <button
@@ -43,7 +43,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
         {editing && canAdd ? (
           <input
             ref={inputRef}
-            className="w-28 rounded-full border border-brand bg-white px-2.5 py-[3px] text-[12px] text-ink outline-none shadow-[0_0_0_3px_var(--color-brand-soft)] placeholder:text-[#a9aeb8]"
+            className="w-28 rounded-full border border-brand bg-white px-2.5 py-[3px] text-xs text-ink outline-none shadow-[0_0_0_3px_var(--color-brand-soft)] placeholder:text-[#a9aeb8]"
             autoFocus
             value={draft}
             placeholder={placeholder}
@@ -66,7 +66,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
         ) : canAdd ? (
           <button
             type="button"
-            className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-line px-2.5 py-[3px] text-[12px] text-mute transition-colors hover:border-brand-line2 hover:bg-brand-soft/50 hover:text-brand-deep"
+            className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-line px-2.5 py-[3px] text-xs text-mute transition-colors hover:border-brand-line2 hover:bg-brand-soft/50 hover:text-brand-deep"
             onClick={() => setEditing(true)}
           >
             <Plus size={11} strokeWidth={2.2} />
@@ -82,7 +82,7 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
             <button
               key={s}
               type="button"
-              className="rounded-full bg-mute-soft px-2 py-[2px] text-[11px] text-ink2 transition-colors hover:bg-brand-soft hover:text-brand-deep"
+              className="rounded-full bg-mute-soft px-2 py-[2px] text-xs text-ink2 transition-colors hover:bg-brand-soft hover:text-brand-deep"
               onMouseDown={(e) => { e.preventDefault(); commit(s) }}
             >
               {s}

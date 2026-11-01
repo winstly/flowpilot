@@ -9,15 +9,15 @@ export default function AskUserQuestion({ questions = [], onAnswer }) {
         return (
           <div
             key={q.id}
-            className={`rounded-[10px] border p-3 transition-colors duration-[180ms] ${
+            className={`rounded-btn border p-3 transition-colors duration-[180ms] ${
               answered ? 'border-ok-soft bg-ok-soft/50' : 'border-warn-soft bg-warn-soft/40'
             }`}
           >
             <div className="flex items-start gap-2">
-              <span className={`badge ${answered ? 'badge-ok' : 'badge-warn'} !py-0.5 !text-[10.5px]`}>
+              <span className={`badge ${answered ? 'badge-ok' : 'badge-warn'} !py-0.5 !text-xs`}>
                 检查点 {i + 1}
               </span>
-              <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-ink">{q.q}</span>
+              <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-ink">{q.q}</span>
             </div>
             <div className="mt-2.5 space-y-1.5">
               {q.options.map((opt) => {
@@ -26,7 +26,7 @@ export default function AskUserQuestion({ questions = [], onAnswer }) {
                   <button
                     key={opt}
                     onClick={() => onAnswer(q.id, opt)}
-                    className={`flex w-full items-center gap-2.5 rounded-[9px] border px-3 py-2 text-left text-[13px] transition-all duration-[180ms] ${
+                    className={`flex w-full items-center gap-2.5 rounded-btn border px-3 py-2 text-left text-sm transition-all duration-[180ms] ${
                       on
                         ? 'border-brand bg-brand-soft font-medium text-brand-deep'
                         : 'border-line bg-panel text-ink hover:border-brand-line2 hover:bg-brand-soft/60'

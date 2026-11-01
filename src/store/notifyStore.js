@@ -17,7 +17,7 @@ let notifications = [
     type: 'task-done',
     taskId: 'T-95',
     taskTitle: '生成 10 月第 3 周竞品周报',
-    body: '任务「生成 10 月第 3 周竞品周报」已完成 · 5/5 节点成功',
+    body: '任务「生成 10 月第 3 周竞品周报」已完成，5/5 节点成功',
     read: false,
     time: '14:18',
   },
@@ -46,7 +46,7 @@ let notifications = [
     type: 'task-done',
     taskId: 'T-96',
     taskTitle: '为 v2.6.0 发布跑一遍检查单',
-    body: '任务「为 v2.6.0 发布跑一遍检查单」已完成 · 4/4 节点成功',
+    body: '任务「为 v2.6.0 发布跑一遍检查单」已完成，4/4 节点成功',
     read: true,
     time: '10:05',
   },
@@ -75,7 +75,7 @@ let notifications = [
     type: 'task-done',
     taskId: 'T-93',
     taskTitle: '把复盘结论沉淀为可复用方法论',
-    body: '任务「把复盘结论沉淀为可复用方法论」已完成 · 4/4 节点成功',
+    body: '任务「把复盘结论沉淀为可复用方法论」已完成，4/4 节点成功',
     read: true,
     time: '昨天 14:00',
   },
@@ -143,7 +143,7 @@ export function notifyTaskDone(task) {
     type: 'task-done',
     taskId: task.id,
     taskTitle: task.title,
-    body: `任务「${task.title}」已完成 · ${task.board.filter((n) => n.status === 'done').length}/${task.board.length} 节点成功`,
+    body: `任务「${task.title}」已完成，${task.board.filter((n) => n.status === 'done').length}/${task.board.length} 节点成功`,
   })
 }
 

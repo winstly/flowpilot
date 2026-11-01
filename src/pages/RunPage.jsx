@@ -3,7 +3,7 @@ import { useNavigate, useParams, Navigate, useSearchParams } from 'react-router-
 import toast from 'react-hot-toast'
 import {
   ArrowLeft, Play, MessagesSquare, Bot, Sparkles, CircleCheck, UserCheck,
-  MessageSquareWarning, TrendingUp, CheckCheck, Minus, Plus, Share2,
+  MessageSquareWarning, TrendingUp, CheckCheck, Minus, Plus, Share, LoaderCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import WorkflowPublishDialog from '@/components/WorkflowPublishDialog'
@@ -167,7 +167,7 @@ export default function RunPage() {
           返回任务
         </button>
         <span className="h-4 w-px bg-line" />
-        <h1 className="truncate text-[14px] font-semibold text-ink">{task.title}</h1>
+        <h1 className="truncate text-sm font-semibold text-ink">{task.title}</h1>
         <span className="text-xs text-mute">{task.id}</span>
         <Badge node={TASK_STATUS[task.status]} />
         <div className="flex-1" />
@@ -186,8 +186,8 @@ export default function RunPage() {
           </button>
         )}
         {task.status === 'running' && (
-          <span className="flex items-center gap-2 rounded-[9px] bg-brand-soft px-3.5 py-2 text-[13px] font-medium text-brand-deep">
-            <Loader2 size={14} className="animate-spin" />
+          <span className="flex items-center gap-2 rounded-btn bg-brand-soft px-3.5 py-2 text-sm font-medium text-brand-deep">
+            <LoaderCircle size={14} className="animate-spin" />
             执行中
           </span>
         )}
@@ -200,7 +200,7 @@ export default function RunPage() {
         {/* 任务成功结束 → 把这套 Workflow 申请发布到团队 */}
         {task.status === 'done' && (
           <button className="btn-primary" onClick={() => setPubOpen(true)}>
-            <Share2 size={14} />
+            <Share size={14} />
             申请发布
           </button>
         )}
@@ -214,15 +214,15 @@ export default function RunPage() {
       >
         {/* 悬浮面板：执行前显示概要 / 运行中显示进度 / 结束后显示复盘入口 */}
         {task.status === 'draft' && (
-          <div className="panel absolute right-5 top-4 z-20 w-[220px] px-4 py-3 text-[12px] text-ink2 shadow-[0_6px_20px_rgba(15,20,40,.07)]">
-            <div className="mb-1.5 text-[11px] font-medium text-mute">任务概要</div>
-            <p>{task.board.length} 个节点 · {getWorkflow(task.workflowId)?.name}</p>
-            <p className="mt-1 text-[11px] text-mute">点击「开始执行」启动工作流</p>
+          <div className="panel absolute right-5 top-4 z-20 w-[220px] px-4 py-3 text-xs text-ink2 shadow-pop">
+            <div className="mb-1.5 text-xs font-medium text-mute">任务概要</div>
+            <div className="meta-line mt-1"><span>{task.board.length} 节点</span><span>{getWorkflow(task.workflowId)?.name}</span></div>
+            <p className="mt-1 text-xs text-mute">点击「开始执行」启动工作流</p>
           </div>
         )}
 
         {/* 缩放控件（fixed 固定，不随画布滚动） */}
-        <div className="panel fixed bottom-[60px] left-4 z-30 flex items-center overflow-hidden !rounded-[10px] shadow-[0_4px_16px_rgba(15,20,40,.10)]">
+        <div className="panel fixed bottom-[60px] left-4 z-30 flex items-center overflow-hidden !rounded-btn shadow-pop">
           <button
             className="iconbtn !rounded-none border-r border-line"
             aria-label="缩小"
@@ -231,7 +231,7 @@ export default function RunPage() {
             <Minus size={14} />
           </button>
           <button
-            className="w-[52px] text-center text-[11.5px] font-medium text-ink2 tabular-nums hover:text-ink"
+            className="w-[52px] text-center text-xs font-medium text-ink2 tabular-nums hover:text-ink"
             onClick={() => setZoom(1)}
             title="重置缩放"
           >
@@ -314,7 +314,7 @@ export default function RunPage() {
       {/* 页脚进度 */}
       <footer className="flex h-12 flex-none items-center gap-3 border-t border-line bg-panel px-5">
         <CheckCheck size={15} className="text-ok" />
-        <span className="text-[13px] font-medium text-ink">{doneCount} / {task.board.length} 已完成</span>
+        <span className="text-sm font-medium text-ink">{doneCount} / {task.board.length} 已完成</span>
         <div className="h-1.5 w-40 overflow-hidden rounded-full bg-mute-soft">
           <div
             className="h-full rounded-full bg-brand transition-all duration-[180ms]"
@@ -373,7 +373,7 @@ function FlowNode({ node, pos, selected, onClick }) {
   const unanswered = isReview ? node.review?.questions.filter((q) => !q.answer).length || 0 : 0
   return (
     <button
-      className="fnode absolute flex flex-col rounded-[12px] border bg-panel px-3.5 py-3 text-left shadow-[0_2px_8px_rgba(15,20,40,.05)] transition-all duration-[180ms] hover:shadow-[0_6px_18px_rgba(15,20,40,.10)]"
+      className="fnode absolute flex flex-col rounded-panel border bg-panel px-3.5 py-3 text-left shadow-card transition-all duration-[180ms] hover:shadow-pop"
       style={{ left: pos.x, top: pos.y, width: NODE_W, height: NODE_H }}
       onClick={(e) => { e.stopPropagation(); onClick() }}
     >
@@ -389,19 +389,19 @@ function FlowNode({ node, pos, selected, onClick }) {
       />
       <span className="flex items-start gap-2">
         <span
-          className={`flex size-6 flex-none items-center justify-center rounded-[7px] ${
+          className={`flex size-6 flex-none items-center justify-center rounded-btn ${
             fail ? 'bg-fail-soft text-fail' : isReview && unanswered ? 'bg-warn-soft text-warn' : 'bg-brand-soft text-brand'
           }`}
         >
           <Icon size={13} strokeWidth={1.9} />
         </span>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-medium leading-6 text-ink">{node.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium leading-6 text-ink">{node.name}</span>
       </span>
       <span className="mt-1.5 flex items-center justify-between gap-2">
-        <span className="truncate text-[11.5px] text-mute">{node.agent}</span>
+        <span className="truncate text-xs text-mute">{node.agent}</span>
         <Badge node={st} />
       </span>
-      <span className="mt-auto flex items-center justify-between text-[11px] text-mute">
+      <span className="mt-auto flex items-center justify-between text-xs text-mute">
         <span>{unanswered > 0 ? `${unanswered} 问待确认` : node.duration}</span>
         {node.corrections > 0 && (
           <span className="flex items-center gap-0.5 text-amber">
@@ -411,11 +411,11 @@ function FlowNode({ node, pos, selected, onClick }) {
         )}
       </span>
       <span
-        className={`pointer-events-none absolute inset-0 rounded-[12px] ${
+        className={`pointer-events-none absolute inset-0 rounded-panel ${
           fail
             ? 'border-2 border-fail'
             : selected
-              ? 'border-2 border-brand shadow-[0_0_0_4px_rgba(75,110,246,.12)]'
+              ? 'border-2 border-brand shadow-[0_0_0_4px_var(--color-brand-soft)]'
               : 'border-line'
         }`}
       />

@@ -53,7 +53,7 @@ export default function NotifyPanel() {
       >
         <Bell size={17} strokeWidth={1.9} />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex size-[16px] items-center justify-center rounded-full bg-fail text-[9px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex size-[16px] items-center justify-center rounded-full bg-fail text-xs font-bold text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -64,9 +64,9 @@ export default function NotifyPanel() {
           {/* 头部 */}
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-semibold text-ink">通知</span>
+              <span className="text-sm font-semibold text-ink">通知</span>
               {unread > 0 && (
-                <span className="badge badge-fail !py-0 !text-[10px]">{unread} 条未读</span>
+                <span className="badge badge-fail !py-0 !text-xs">{unread} 条未读</span>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -102,7 +102,7 @@ export default function NotifyPanel() {
             {items.length === 0 && (
               <div className="flex flex-col items-center gap-2 py-10 text-mute">
                 <Bell size={24} strokeWidth={1.2} />
-                <span className="text-[12.5px]">暂无通知</span>
+                <span className="text-xs">暂无通知</span>
               </div>
             )}
             {items.map((n) => {
@@ -120,13 +120,13 @@ export default function NotifyPanel() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                      <span className={`chip !py-0 !text-[9.5px] ${n.read ? 'chip-neutral' : 'chip-accent'}`}>
+                      <span className={`chip !py-0 !text-xs ${n.read ? 'chip-neutral' : 'chip-accent'}`}>
                         {meta.label}
                       </span>
-                      <span className="truncate text-[12px] font-medium text-ink">{n.taskTitle}</span>
+                      <span className="truncate text-xs font-medium text-ink">{n.taskTitle}</span>
                     </span>
-                    <span className="mt-0.5 block text-[11.5px] leading-relaxed text-ink2">{n.body}</span>
-                    <span className="mt-1 block text-[10px] text-mute">{n.time}</span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-ink2">{n.body}</span>
+                    <span className="mt-1 block text-xs text-mute">{n.time}</span>
                   </span>
                   {!n.read && <span className="mt-1.5 size-[6px] flex-none rounded-full bg-brand" />}
                 </button>

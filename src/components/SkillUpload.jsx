@@ -28,7 +28,7 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
       const zip = await JSZip.loadAsync(file)
       const files = Object.keys(zip.files).filter((f) => !zip.files[f].dir)
       onFiles(buildTree(files))
-      toast(`ZIP 解析完成 · ${files.length} 个文件`)
+      toast(`ZIP 解析完成，${files.length} 个文件`)
     } catch {
       toast('ZIP 解析失败，请检查文件格式')
     }
@@ -40,16 +40,16 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
     setChannel('folder')
     const paths = files.map((f) => f.webkitRelativePath || f.name)
     onFiles(buildTree(paths))
-    toast(`文件夹导入完成 · ${files.length} 个文件`)
+    toast(`文件夹导入完成，${files.length} 个文件`)
   }
 
   return (
-    <div className="rounded-[12px] border border-line p-5">
-      <div className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+    <div className="rounded-panel border border-line p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-ink">
         <Sparkles size={15} className="text-brand" />
         {mode === 'edit' ? '更新 Skill 文件' : 'Skill 文件'}
       </div>
-      <p className="mt-1 text-[12px] text-ink2">
+      <p className="mt-1 text-xs text-ink2">
         上传 ZIP 压缩包或选择文件夹。标准目录结构：SKILL.md + references/ + scripts/ + assets/
       </p>
 
@@ -57,25 +57,25 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
       <div className="mt-4 grid grid-cols-2 gap-3">
         <button
           type="button"
-          className={`flex flex-col items-center gap-2 rounded-[10px] border-2 border-dashed px-4 py-5 transition-colors ${
+          className={`flex flex-col items-center gap-2 rounded-btn border-2 border-dashed px-4 py-5 transition-colors ${
             channel === 'zip' ? 'border-brand bg-brand-soft/40' : 'border-line hover:border-brand-line2'
           }`}
           onClick={() => zipRef.current?.click()}
         >
           <FileArchive size={22} className="text-brand" />
-          <span className="text-[12.5px] font-medium text-ink">上传 ZIP</span>
-          <span className="text-[11px] text-mute">打包好的 Skill 目录</span>
+          <span className="text-xs font-medium text-ink">上传 ZIP</span>
+          <span className="text-xs text-mute">打包好的 Skill 目录</span>
         </button>
         <button
           type="button"
-          className={`flex flex-col items-center gap-2 rounded-[10px] border-2 border-dashed px-4 py-5 transition-colors ${
+          className={`flex flex-col items-center gap-2 rounded-btn border-2 border-dashed px-4 py-5 transition-colors ${
             channel === 'folder' ? 'border-brand bg-brand-soft/40' : 'border-line hover:border-brand-line2'
           }`}
           onClick={() => folderRef.current?.click()}
         >
           <FolderUp size={22} className="text-brand" />
-          <span className="text-[12.5px] font-medium text-ink">选择文件夹</span>
-          <span className="text-[11px] text-mute">从本地目录导入</span>
+          <span className="text-xs font-medium text-ink">选择文件夹</span>
+          <span className="text-xs text-mute">从本地目录导入</span>
         </button>
       </div>
 
@@ -84,13 +84,13 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
 
       {/* 标准目录结构参考 */}
       <div className="mt-4">
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">标准目录结构</div>
-        <div className="rounded-[8px] bg-canvas p-3">
+        <div className="mb-1.5 block-label">标准目录结构</div>
+        <div className="rounded-btn bg-canvas p-3">
           {STANDARD_DIRS.map((d) => (
-            <div key={d.name} className="flex items-center gap-2 py-1 text-[11.5px]">
+            <div key={d.name} className="flex items-center gap-2 py-1 text-xs">
               {d.type === 'dir' ? <FolderTree size={12} className="text-mute" /> : <FileText size={12} className="text-brand" />}
               <span className="font-mono text-ink">{d.name}</span>
-              {d.required && <span className="chip chip-accent !py-0 !text-[9px]">必需</span>}
+              {d.required && <span className="chip chip-accent !py-0 !text-xs">必需</span>}
               <span className="text-mute">{d.desc}</span>
             </div>
           ))}
@@ -101,16 +101,16 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
       {fileTree && (
         <div className="anim-drop mt-4">
           <div className="mb-1.5 flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-mute">上传内容</div>
+            <div className="block-label">上传内容</div>
             <button
               type="button"
-              className="text-[11px] text-mute transition-colors hover:text-fail"
+              className="text-xs text-mute transition-colors hover:text-fail"
               onClick={() => { onFiles(null); setChannel(null) }}
             >
               清除
             </button>
           </div>
-          <div className="rounded-[8px] border border-line p-3">
+          <div className="rounded-btn border border-line p-3">
             <TreePreview items={fileTree} />
           </div>
         </div>
@@ -140,7 +140,7 @@ function TreePreview({ items, depth = 0 }) {
     <div>
       {items.map((item) => (
         <div key={item.name} style={{ paddingLeft: depth * 16 }}>
-          <div className="flex items-center gap-1.5 py-0.5 text-[11.5px]">
+          <div className="flex items-center gap-1.5 py-0.5 text-xs">
             {item.type === 'dir' ? (
               <FolderTree size={11} className="text-mute" />
             ) : (

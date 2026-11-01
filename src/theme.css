@@ -1,51 +1,64 @@
 @import "tailwindcss";
 
-/* ============ 品牌令牌（CSS-first，v4 规范） ============ */
+/* ============ 令牌（CSS-first，v4 规范） ============
+   规范来源：b-end-design-system 01-design-tokens / refactoring-ui 04-06 /
+   desktop-agent-ui 八大铁律。四层色彩：中性 Slate 单灰阶 + 信号蓝（仅
+   选中/运行/焦点）+ 状态语义（仅 Badge）+ 主操作墨黑。 */
 @theme {
-  /* 主操作黑 */
-  --color-primary: #1f1f1f;
-  --color-primary-hover: #353535;
-  /* 强调蓝阶（全站唯一彩色） */
-  --color-brand: #4b6ef6;
-  --color-brand-deep: #395bdc;
-  --color-brand-soft: #eef2ff;
-  --color-brand-line: #cbd4ff;
-  --color-brand-line2: #b8c4fb;
-  /* 状态语义色 */
-  --color-ok: #14805c;
-  --color-ok-soft: #e7f3ed;
-  --color-info: #5170db;
-  --color-info-soft: #edf1fb;
-  --color-warn: #b67b1f;
-  --color-warn-soft: #f9f0dd;
-  --color-mute: #818793;
-  --color-mute-soft: #f1f2f4;
-  --color-fail: #c4552d;
-  --color-fail-soft: #faeae3;
-  /* 中性 */
-  --color-canvas: #f7f8fa;
+  /* 主操作墨黑（每操作区唯一实心按钮） */
+  --color-primary: #16202c;
+  --color-primary-hover: #2b3648;
+  /* 信号蓝：选中态、运行态、焦点环、链接——不做装饰 */
+  --color-brand: #3355e8;
+  --color-brand-deep: #2440c8;
+  --color-brand-soft: #edf1ff;
+  --color-brand-line: #c6d2ff;
+  --color-brand-line2: #a8b8fc;
+  /* 状态语义色（Badge 80% 浅底深字，一义一色） */
+  --color-ok: #147a57;
+  --color-ok-soft: #e6f2ec;
+  --color-info: #3f5dc4;
+  --color-info-soft: #eaeffb;
+  --color-warn: #8f5f10;
+  --color-warn-soft: #f8eedb;
+  --color-mute: #64748b;
+  --color-mute-soft: #eef1f5;
+  --color-fail: #b24522;
+  --color-fail-soft: #f9e8e1;
+  /* 中性（Slate 冷灰单一家族，禁止纯黑纯灰） */
+  --color-canvas: #f6f8fa;
   --color-panel: #ffffff;
-  --color-line: #e5e7eb;
-  --color-ink: #202124;
-  --color-ink2: #737986;
-  --color-amber: #d78a18;
-  --color-notice: #f8f9fb;
-  /* 圆角 */
-  --radius-chip: 99px;
-  --radius-btn: 9px;
-  --radius-btnlg: 13px;
-  --radius-panel: 16px;
-  --radius-modal: 18px;
-  /* 字体 */
+  --color-line: rgba(226, 232, 240, 0.8);
+  --color-ink: #0f172a;
+  --color-ink2: #475569;
+  --color-faint: #94a3b8;
+  --color-subtle: #f1f5f9;
+  --color-amber: #b4771a;
+  --color-notice: #f7f8fa;
+  /* 圆角六档：2 / 4 / 8 / 12 / 16 / pill（同心圆角 R_outer = R_inner + padding） */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-btn: 8px;
+  --radius-panel: 12px;
+  --radius-modal: 16px;
+  --radius-chip: 999px;
+  /* 阴影三档：零水平偏移，冷调低透明，多层扩散（光从上方来） */
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-pop: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-dialog: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --shadow-drawer: -16px 0 40px rgba(15, 23, 42, 0.08);
+  /* 字体：UI 走系统 sans，数字遥测走等宽（仪表读数签名） */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
 }
 
 @layer base {
   html { font-family: var(--font-sans); }
   body { background: var(--color-canvas); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
   ::selection { background: var(--color-brand-line); }
-  :focus-visible { outline: 2px solid var(--color-brand-line2); outline-offset: 2px; }
+  /* 焦点环：品牌实色 3:1+ 对比（浅色 line2 不足以作可见焦点） */
+  :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
 }
@@ -80,6 +93,8 @@
 
 /* ============ 组件类（静态样式收敛，避免重复长类名） ============ */
 @layer components {
+  /* 按钮五阶：primary 实心墨黑（每操作区唯一）→ outline 描边 → ghost 幽灵
+     → danger 实心（仅确认弹窗内）→ 页内危险 = ghost + fail 文字 */
   .btn-primary {
     display: inline-flex; align-items: center; gap: 6px;
     background: var(--color-primary); color: #fff;
@@ -95,32 +110,47 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     background: transparent; color: var(--color-ink2);
     border: 1px solid transparent; border-radius: var(--radius-btn);
-    padding: 7px 12px; font-size: 13px;
+    padding: 7px 12px; font-size: 14px;
     transition: all .18s ease;
   }
-  .btn-ghost:hover { background: var(--color-mute-soft); color: var(--color-ink); }
+  .btn-ghost:hover { background: var(--color-subtle); color: var(--color-ink); }
 
   .btn-outline {
     display: inline-flex; align-items: center; gap: 6px;
     background: #fff; color: var(--color-ink);
     border: 1px solid var(--color-line); border-radius: var(--radius-btn);
-    padding: 8px 14px; font-size: 13px; font-weight: 500;
+    padding: 8px 14px; font-size: 14px; font-weight: 500;
     transition: all .18s ease;
   }
-  .btn-outline:hover { border-color: var(--color-brand-line2); color: var(--color-brand-deep); background: var(--color-brand-soft); }
+  .btn-outline:hover { border-color: var(--color-faint); background: var(--color-subtle); }
 
-  .panel { background: var(--color-panel); border: 1px solid var(--color-line); border-radius: var(--radius-panel); }
+  /* 页内危险操作：幽灵 + fail 文字（实心红只进确认弹窗） */
+  .btn-danger-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; color: var(--color-fail);
+    border: 1px solid transparent; border-radius: var(--radius-btn);
+    padding: 7px 12px; font-size: 14px;
+    transition: all .18s ease;
+  }
+  .btn-danger-ghost:hover { background: var(--color-fail-soft); }
 
+  .panel {
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+
+  /* 分类标签（Tag 语义：可增删的元数据）→ 中性胶囊，不做彩色 */
   .chip {
     display: inline-flex; align-items: center; gap: 5px;
     border-radius: var(--radius-chip); padding: 4px 11px;
-    font-size: 12.5px; line-height: 1.4; white-space: nowrap;
+    font-size: 12px; line-height: 1.4; white-space: nowrap;
     transition: all .18s ease;
   }
   .chip-accent { background: var(--color-brand-soft); color: var(--color-brand-deep); border: 1px solid var(--color-brand-line); }
-  .chip-neutral { background: var(--color-mute-soft); color: #5b616c; border: 1px solid var(--color-line); }
-  .chip-solid { background: var(--color-brand); color: #fff; border: 1px solid var(--color-brand); }
+  .chip-neutral { background: var(--color-subtle); color: var(--color-ink2); border: 1px solid var(--color-line); }
 
+  /* 状态徽章（Badge 语义：系统客观状态）→ 80% 浅底深字 + 状态点，一义一色 */
   .badge {
     display: inline-flex; align-items: center; gap: 5px;
     border-radius: var(--radius-chip); padding: 3px 10px;
@@ -136,16 +166,17 @@
   .notice {
     display: flex; align-items: center; gap: 8px;
     background: var(--color-notice); color: var(--color-ink2);
-    border-radius: var(--radius-btn); padding: 9px 12px; font-size: 12.5px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-btn); padding: 9px 12px; font-size: 12px;
   }
   .notice svg { color: var(--color-amber); flex: none; }
 
   .field {
     width: 100%; background: #fff; border: 1px solid var(--color-line);
-    border-radius: var(--radius-btn); padding: 9px 12px; font-size: 13.5px; color: var(--color-ink);
+    border-radius: var(--radius-btn); padding: 9px 12px; font-size: 14px; color: var(--color-ink);
     transition: border-color .18s ease, box-shadow .18s ease;
   }
-  .field::placeholder { color: #a9aeb8; }
+  .field::placeholder { color: var(--color-faint); }
   .field:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px var(--color-brand-soft); }
 
   .iconbtn {
@@ -154,9 +185,10 @@
     color: var(--color-ink2); border: 1px solid transparent; background: transparent;
     transition: all .18s ease;
   }
-  .iconbtn:hover { background: var(--color-mute-soft); color: var(--color-ink); border-color: var(--color-line); }
+  .iconbtn:hover { background: var(--color-subtle); color: var(--color-ink); border-color: var(--color-line); }
   .iconbtn-danger:hover { background: var(--color-fail-soft); color: var(--color-fail); border-color: var(--color-fail-soft); }
 
+  /* 实心红：仅确认弹窗内的最终破坏按钮 */
   .btn-danger {
     display: inline-flex; align-items: center; gap: 6px;
     background: var(--color-fail); color: #fff;
@@ -164,21 +196,51 @@
     padding: 9px 18px; font-size: 14px; font-weight: 500;
     transition: background .18s ease, transform .18s ease;
   }
-  .btn-danger:hover { background: #a84423; }
+  .btn-danger:hover { background: #9c3c1d; }
   .btn-danger:active { transform: scale(.985); }
+
+  /* ============ 遥测读数条（签名元素） ============
+     任务卡 / 资源卡 / 知识条目 / 执行轨迹的状态读数：等宽表格数字 +
+     0.5px 发丝刻度线分隔（替代被禁用的 "·" 中点）。 */
+  .meta-line {
+    display: flex; align-items: center; flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 12px; line-height: 1; color: var(--color-mute);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-line > * {
+    display: inline-flex; align-items: center; gap: 5px;
+    white-space: nowrap;
+  }
+  .meta-line > * + * { margin-left: 11px; }
+  .meta-line > * + *::before {
+    content: ""; display: inline-block;
+    width: 1px; height: 10px;
+    background: rgba(15, 23, 42, 0.16);
+    margin-right: 5px;
+    align-self: center;
+  }
+
+  /* 块标签（弹窗/详情内的小节名）：12px/600 中灰，不做大字距大写 */
+  .block-label {
+    font-size: 12px; font-weight: 600; color: var(--color-mute);
+  }
 }
 
 /* ============ 原生 dialog（资源选择） ============ */
 .dlg {
   border: none; padding: 0; border-radius: var(--radius-modal);
-  box-shadow: 0 24px 64px rgba(15, 20, 40, .16);
+  box-shadow: var(--shadow-dialog);
   background: #fff; max-width: 560px; width: calc(100vw - 48px);
   position: relative;
+  /* 黄金分割位：顶边落在视口 38.2% 附近，不做 50% 居中（防下沉错觉） */
+  margin: max(80px, 15vh) auto auto;
+  max-height: calc(100vh - max(80px, 15vh) - 24px);
   /* 把滚动条裁进圆角内，避免方形滑轨溢出圆角边界 */
   clip-path: inset(0 round var(--radius-modal));
 }
 .dlg::backdrop {
-  background: rgba(23, 26, 33, .52);
+  background: rgba(15, 23, 42, 0.48);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
 }
@@ -203,20 +265,22 @@
 .flow-bg .fnode { cursor: pointer; }
 
 /* ============ Radix 弹窗动画 ============ */
-/* 遮罩 52% 黑 + 背景虚化：浅色界面上把弹窗从页面里"推"出来 */
+/* 遮罩 48% 墨 + 背景虚化：浅色界面上把弹窗从页面里"推"出来 */
 .radix-overlay {
-  background: rgba(23, 26, 33, .52);
+  background: rgba(15, 23, 42, 0.48);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   animation: fade-in .2s ease;
 }
+/* 弹窗垂直位置：视口 38.2% 黄金分割位，不做 50% 居中（防下沉错觉） */
+.radix-overlay[data-radix-dialog-overlay] {
+  align-items: flex-start;
+  padding-top: max(80px, 15vh);
+}
 .radix-content {
   background: #fff; border-radius: var(--radius-modal);
-  /* 三层影：贴地接触影 + 中距投影 + 远距大软影，强化悬浮层级 */
-  box-shadow:
-    0 1px 2px rgba(15, 20, 40, .06),
-    0 12px 32px rgba(15, 20, 40, .16),
-    0 32px 80px rgba(15, 20, 40, .28);
+  /* 三层影收敛为 dialog 档（两段式：接触影随层高衰减） */
+  box-shadow: var(--shadow-dialog);
   animation: dlg-in .24s ease;
   /* 同上：滚动条裁进圆角 */
   clip-path: inset(0 round var(--radius-modal));
@@ -251,11 +315,11 @@
 
 /* Select 内容层 */
 .radix-pop {
-  background: #fff; border: 1px solid var(--color-line); border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(15, 20, 40, .12); overflow: hidden;
+  background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-pop); overflow: hidden;
   animation: dlg-in .18s ease; z-index: 60;
 }
-.radix-item { padding: 8px 12px; font-size: 13.5px; outline: none; cursor: pointer; }
+.radix-item { padding: 8px 12px; font-size: 14px; outline: none; cursor: pointer; }
 .radix-item[data-highlighted] { background: var(--color-brand-soft); color: var(--color-brand-deep); }
 .radix-item[data-state="checked"] { color: var(--color-brand-deep); font-weight: 600; }
 
