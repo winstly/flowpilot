@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Dialog } from 'radix-ui'
 import { X, Zap, CircleCheck, CircleAlert } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 
 /* 接口与模型配置：头像旁设置图标唤起的模态框。
    连接 = baseUrl + API Token；模型槽位按用途分列（主/Mythos/Fable/Opus/Sonnet/Haiku）。 */
@@ -38,7 +38,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
 
   const submit = async () => {
     if (!cfg.base_url.trim() || !cfg.api_key.trim()) {
-      return toast('请填写 Base URL 与 API Token')
+      return warn('请填写 Base URL 与 API Token')
     }
     await window.settings.save({
       base_url: cfg.base_url.trim(),
@@ -46,7 +46,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
       models: Object.fromEntries(Object.entries(cfg.models).map(([k, v]) => [k, (v ?? '').trim()])),
     })
     onOpenChange(false)
-    toast('配置已保存')
+    ok('配置已保存')
   }
 
   return (

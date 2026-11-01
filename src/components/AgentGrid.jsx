@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { Dialog, Select } from 'radix-ui'
 import { Wrench, ChevronDown, X, TriangleAlert, Pencil, Heart, Info, Trash2, Eye, Puzzle, CheckCircle2 } from 'lucide-react'
 import { Stars, statusBadgeCls } from '@/components/ui'
@@ -46,7 +46,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
 
   const deleteAgent = () => {
     setList((l) => l.filter((a) => a.id !== confirmDel.id))
-    toast(`已删除「${confirmDel.name}」`)
+    ok(`已删除「${confirmDel.name}」`)
   }
 
   const kw = q.trim().toLowerCase()
@@ -80,8 +80,8 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
 
   const save = () => {
     const name = form.name.trim()
-    if (!name) { setNameErr(true); return toast('名称为必填项') }
-    if (name.length > 40) { setNameErr(true); return toast('名称不能超过 40 字') }
+    if (!name) { setNameErr(true); return warn('名称为必填项') }
+    if (name.length > 40) { setNameErr(true); return warn('名称不能超过 40 字') }
     const category = form.category || '研究分析'
     const tags = form.tags
 
@@ -107,7 +107,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
       }
       setList([agent, ...list])
       setEditing(null)
-      toast(`「${name}」已提交申请，待审批`)
+      ok(`「${name}」已提交申请，待审批`)
     } else {
       const nv = bump(editing.version)
       setList(list.map((a) =>
@@ -125,7 +125,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
           : a,
       ))
       setEditing(null)
-      toast(`已保存草稿 ${nv}，待发布`)
+      ok(`已保存草稿 ${nv}，待发布`)
     }
   }
 

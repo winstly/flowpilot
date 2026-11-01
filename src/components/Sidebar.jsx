@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { MessageSquareText, Store, BookOpen, Settings, Plus, Sparkles } from 'lucide-react'
 import SettingsDialog from '@/components/SettingsDialog'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 
 const NAV = [
   { to: '/tasks', icon: MessageSquareText, label: '任务与对话' },
@@ -15,7 +15,7 @@ export default function Sidebar() {
   const [cfgOpen, setCfgOpen] = useState(false)
   const newTask = () => {
     navigate('/tasks')
-    toast('已回到任务创建面板')
+    info('已回到任务创建面板')
   }
   return (
     <aside className="sb flex w-[244px] flex-none flex-col border-r border-line bg-panel px-3.5 py-4">

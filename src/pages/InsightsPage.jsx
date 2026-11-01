@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { Dialog, Select } from 'radix-ui'
 import {
   BookOpen, Search, Plus, History, ChevronDown, X, Pencil, Trash2,
@@ -26,8 +26,8 @@ export default function InsightsPage() {
   }
   const saveEdit = () => {
     const title = editForm.title.trim()
-    if (!title) return toast('请填写标题')
-    if (title.length > 90) return toast('标题不能超过 90 字')
+    if (!title) return warn('请填写标题')
+    if (title.length > 90) return warn('标题不能超过 90 字')
     setList(list.map((i) =>
       i.id === editing.id
         ? { ...i, title, category: editForm.category || i.category, body: editForm.body.trim() || i.body, updatedAt: today() }
@@ -35,12 +35,12 @@ export default function InsightsPage() {
     ))
     setDetail(null)
     setEditing(null)
-    toast('方法论已更新')
+    ok('方法论已更新')
   }
   const deleteInsight = () => {
     setList(list.filter((i) => i.id !== confirmDel.id))
     setDetail(null)
-    toast(`已删除「${confirmDel.title}」`)
+    ok(`已删除「${confirmDel.title}」`)
   }
 
   const filtered = list.filter(
@@ -52,8 +52,8 @@ export default function InsightsPage() {
 
   const save = () => {
     const title = form.title.trim()
-    if (!title) return toast('请填写标题')
-    if (title.length > 90) return toast('标题不能超过 90 字')
+    if (!title) return warn('请填写标题')
+    if (title.length > 90) return warn('标题不能超过 90 字')
     setList([
       {
         id: `in-${Date.now()}`, title,
@@ -65,7 +65,7 @@ export default function InsightsPage() {
     ])
     setForm({ title: '', category: '', body: '' })
     setOpen(false)
-    toast('方法论已沉淀到团队知识库')
+    ok('方法论已沉淀到团队知识库')
   }
 
   return (

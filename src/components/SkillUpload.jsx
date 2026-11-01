@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import {
   Upload, FolderUp, FileArchive, FolderTree, FileText, Sparkles,
 } from 'lucide-react'
@@ -28,9 +28,9 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
       const zip = await JSZip.loadAsync(file)
       const files = Object.keys(zip.files).filter((f) => !zip.files[f].dir)
       onFiles(buildTree(files))
-      toast(`ZIP 解析完成，${files.length} 个文件`)
+      ok(`ZIP 解析完成，${files.length} 个文件`)
     } catch {
-      toast('ZIP 解析失败，请检查文件格式')
+      fail('ZIP 解析失败，请检查文件格式')
     }
   }
 
@@ -40,7 +40,7 @@ export default function SkillUpload({ fileTree, onFiles, mode = 'publish' }) {
     setChannel('folder')
     const paths = files.map((f) => f.webkitRelativePath || f.name)
     onFiles(buildTree(paths))
-    toast(`文件夹导入完成，${files.length} 个文件`)
+    ok(`文件夹导入完成，${files.length} 个文件`)
   }
 
   return (

@@ -37,11 +37,19 @@ function createWindow() {
           await new Promise((r) => setTimeout(r, 600))
         }
         if (process.env.SNAPSHOT_JS) {
-          await win.webContents.executeJavaScript(process.env.SNAPSHOT_JS)
+          try {
+            await win.webContents.executeJavaScript(process.env.SNAPSHOT_JS)
+          } catch (e) {
+            console.error('SNAPSHOT_JS error:', e.message)
+          }
           await new Promise((r) => setTimeout(r, 600))
         }
-        const image = await win.webContents.capturePage()
-        fs.writeFileSync(process.env.SNAPSHOT, image.toPNG())
+        try {
+          const image = await win.webContents.capturePage()
+          fs.writeFileSync(process.env.SNAPSHOT, image.toPNG())
+        } catch (e) {
+          console.error('SNAPSHOT capture error:', e.message)
+        }
         app.exit(0)
       }, 800)
     }

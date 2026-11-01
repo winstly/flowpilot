@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { X, MessageSquareWarning, UserCheck, ClipboardCopy, FileText, Star } from 'lucide-react'
 import { Stars, tabItemCls } from '@/components/ui'
 import AskUserQuestion from '@/components/AskUserQuestion'
@@ -60,8 +60,8 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
       }),
     ]
     navigator.clipboard?.writeText(lines.join('\n'))
-      .then(() => toast('报告已复制到剪贴板'))
-      .catch(() => toast('复制失败，请手动选择文本'))
+      .then(() => ok('报告已复制到剪贴板'))
+      .catch(() => fail('复制失败，请手动选择文本'))
   }
 
   return (
@@ -170,7 +170,7 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                       onAnswer={(qid, opt) => {
                         taskStore.answerReview(task.id, n.id, { [qid]: opt })
                         refresh()
-                        toast('审查结论已记录')
+                        ok('审查结论已记录')
                       }}
                     />
                   </div>
@@ -217,7 +217,7 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                   onClick={() => {
                     taskStore.setUserRating(task.id, i)
                     refresh()
-                    toast('已记录你的评分')
+                    ok('已记录你的评分')
                   }}
                   aria-label={`${i} 星`}
                   className="transition-transform duration-[180ms] hover:scale-110"
@@ -246,10 +246,10 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
               <button
                 className="btn-outline !py-1.5"
                 onClick={() => {
-                  if (!fb.trim()) return toast('先写下你的建议再提交')
+                  if (!fb.trim()) return warn('先写下你的建议再提交')
                   taskStore.setUserFeedback(task.id, fb)
                   refresh()
-                  toast('建议已提交，将同步给负责人')
+                  ok('建议已提交，将同步给负责人')
                 }}
               >
                 <FileText size={13} />提交建议

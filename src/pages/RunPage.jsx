@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useReducer } from 'react'
 import { useNavigate, useParams, Navigate, useSearchParams } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import {
   ArrowLeft, Play, MessagesSquare, Bot, Sparkles, CircleCheck, UserCheck,
   MessageSquareWarning, TrendingUp, CheckCheck, Minus, Plus, Share, LoaderCircle,
@@ -134,7 +134,7 @@ export default function RunPage() {
     taskStore.addCorrection(task.id, null, text) // 任务级纠正，主 Agent 自动纠偏
     setChatText('')
     force()
-    toast('纠正已记录，主 Agent 将自动纠偏')
+    ok('纠正已记录，主 Agent 将自动纠偏')
   }
 
   // 拖拽平移：只在画布空白处触发；交互元素（节点/按钮/复盘面板等）直接放行
@@ -179,7 +179,7 @@ export default function RunPage() {
         {task.status === 'draft' && (
           <button
             className="btn-primary"
-            onClick={() => toast('演示环境：开始执行不会真正运行任务')}
+            onClick={() => info('演示环境：开始执行不会真正运行任务')}
           >
             <Play size={14} className="fill-white" />
             开始执行
@@ -340,7 +340,7 @@ export default function RunPage() {
         draft={{ name: task.title }}
         onPublish={(draft) => {
           const res = publishWorkflowFromTask(task, draft)
-          toast(`「${res.name}」已提交申请，待审批`)
+          ok(`「${res.name}」已提交申请，待审批`)
         }}
       />
 

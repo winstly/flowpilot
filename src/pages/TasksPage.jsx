@@ -1,6 +1,6 @@
 import { useState, useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import {
   Workflow, Bot, Puzzle, FolderOpen, Paperclip, X, TriangleAlert,
   Clock, GitFork, MessageSquareWarning, SendHorizonal, Trash2, Share,
@@ -42,7 +42,7 @@ export default function TasksPage() {
   // 任务结束后的 Workflow 发布入口：AI 草稿 + 对话调整 → 进入市场待审批
   const publishFromTask = (draft) => {
     const res = publishWorkflowFromTask(pubTask, draft)
-    toast(`「${res.name}」已提交申请，待审批`)
+    ok(`「${res.name}」已提交申请，待审批`)
   }
 
   const tasks = taskStore.list()
@@ -54,8 +54,8 @@ export default function TasksPage() {
     setSel((s) => ({ ...s, [key]: s[key].filter((x) => x !== id) }))
 
   const create = () => {
-    if (!text.trim()) return toast('请先描述你要完成的任务')
-    if (!sel.workflow) return toast('请先绑定一个 Workflow')
+    if (!text.trim()) return warn('请先描述你要完成的任务')
+    if (!sel.workflow) return warn('请先绑定一个 Workflow')
     const t = taskStore.add({
       title: text.trim().slice(0, 60),
       workflowId: sel.workflow,
@@ -66,7 +66,7 @@ export default function TasksPage() {
     })
     setText('')
     setSel({ workflow: '', agents: [], skills: [], dir: '', attachments: [] })
-    toast(`任务 ${t.id} 已创建`)
+    ok(`任务 ${t.id} 已创建`)
   }
 
   return (
@@ -182,7 +182,7 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
   const deleteTask = () => {
     taskStore.remove(confirmDel.id)
     force()
-    toast(`已删除任务「${confirmDel.title}」`)
+    ok(`已删除任务「${confirmDel.title}」`)
   }
 
   return (

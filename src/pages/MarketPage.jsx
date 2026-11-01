@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { Dialog } from 'radix-ui'
 import {
   Search, Heart, Eye, Plus, CheckCircle2, X,
@@ -93,7 +93,7 @@ function MarketShell({ tab, setTab }) {
   }
   const saveEdit = () => {
     const name = editForm.name.trim()
-    if (!name) return toast('请填写名称')
+    if (!name) return warn('请填写名称')
     const [a, b] = editDlg.version.slice(1).split('.')
     const nv = `v${a}.${Number(b) + 1}`
     const tags = editForm.tags
@@ -116,11 +116,11 @@ function MarketShell({ tab, setTab }) {
       skillDetails[editDlg.id] = { tree: editTree }
     }
     setEditDlg(null)
-    toast(`已保存草稿 ${nv}，待发布`)
+    ok(`已保存草稿 ${nv}，待发布`)
   }
   const deleteResource = () => {
     setList((l) => l.filter((r) => r.id !== confirmDel.id))
-    toast(`已删除「${confirmDel.name}」`)
+    ok(`已删除「${confirmDel.name}」`)
   }
 
   const isAgent = tab === 'Agent'
@@ -144,10 +144,10 @@ function MarketShell({ tab, setTab }) {
 
   const publish = () => {
     const name = pub.name.trim()
-    if (!name) return toast('请填写名称')
-    if (tab === 'Skill' && !pubTree) return toast('请先上传 ZIP 或选择文件夹')
-    if (tab === 'Rule' && !pub.content.trim()) return toast('请填写规则内容')
-    if (tab === 'MCP' && !pub.addr.trim()) return toast('请填写服务器地址')
+    if (!name) return warn('请填写名称')
+    if (tab === 'Skill' && !pubTree) return warn('请先上传 ZIP 或选择文件夹')
+    if (tab === 'Rule' && !pub.content.trim()) return warn('请填写规则内容')
+    if (tab === 'MCP' && !pub.addr.trim()) return warn('请填写服务器地址')
     const id = `${tab}-${Date.now()}`
     const desc = pub.desc.trim() || '（待补充说明）'
     // 类型专属内容入库，「查看」详情即可直接预览
@@ -181,7 +181,7 @@ function MarketShell({ tab, setTab }) {
     setPub({ name: '', desc: '', tags: [], addr: '', content: '' })
     setPubTree(null)
     setPubOpen(false)
-    toast(`「${name}」已提交申请，待审批`)
+    ok(`「${name}」已提交申请，待审批`)
   }
 
   // Workflow 的发布入口在任务结束后（任务卡 / 运行页），市场页不提供申请发布
@@ -196,7 +196,7 @@ function MarketShell({ tab, setTab }) {
   // 已下线资源重新申请发布：回到「待发布」，重新走审批
   const reapply = (r) => {
     setList((l) => l.map((x) => x.id === r.id ? { ...x, status: '待发布' } : x))
-    toast(`「${r.name}」已重新提交发布申请，待审批`)
+    ok(`「${r.name}」已重新提交发布申请，待审批`)
   }
 
   // 遥测读数：非 Agent = 资源数/已收藏/待发布；Agent = 总数/工具接入/评分
@@ -320,7 +320,7 @@ function MarketShell({ tab, setTab }) {
                       className="btn-outline !py-1.5 !px-2.5 !text-xs"
                       onClick={() => {
                         setList((l) => l.map((x) => x.id === r.id ? { ...x, status: '正常' } : x))
-                        toast(`「${r.name}」已审批通过`)
+                        ok(`「${r.name}」已审批通过`)
                       }}
                     >
                       <CheckCircle2 size={13} />审批
@@ -330,7 +330,7 @@ function MarketShell({ tab, setTab }) {
                       className="btn-danger-ghost !px-2.5 !text-xs"
                       onClick={() => {
                         setList((l) => l.map((x) => x.id === r.id ? { ...x, status: '已下线' } : x))
-                        toast(`「${r.name}」已下线`)
+                        warn(`「${r.name}」已下线`)
                       }}
                     >
                       <Power size={13} />下线
@@ -408,7 +408,7 @@ function MarketShell({ tab, setTab }) {
                       }
                     : r))
                   setEditDlg(null)
-                  toast(`已保存草稿 ${nv}，待发布`)
+                  ok(`已保存草稿 ${nv}，待发布`)
                 }}
               />
             ) : editDlg?.kind === 'Rule' ? (

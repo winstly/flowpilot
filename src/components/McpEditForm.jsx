@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { RefreshCw, Terminal, CheckCircle2, ChevronDown } from 'lucide-react'
 import TagInput from './TagInput'
 import { tabItemCls } from '@/components/ui'
@@ -39,14 +39,14 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     setSyncing(true)
     setTimeout(() => {
       setSyncing(false)
-      toast(`已从 MCP Server 同步 ${tools.length} 个工具`)
+      ok(`已从 MCP Server 同步 ${tools.length} 个工具`)
     }, 800)
   }
 
   const submit = () => {
-    if (!form.name.trim()) return toast('请填写名称')
+    if (!form.name.trim()) return warn('请填写名称')
     if (transport && !form.url.trim() && !form.command.trim()) {
-      return toast('请填写服务器地址或启动命令')
+      return warn('请填写服务器地址或启动命令')
     }
     const parseKV = (text) => Object.fromEntries(
       text.split('\n').map((l) => l.split('=')).filter((p) => p[0]?.trim()),

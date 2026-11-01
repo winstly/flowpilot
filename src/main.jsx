@@ -11,9 +11,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <App />
       <Toaster
         position="top-right"
+        containerStyle={{ top: 'calc(var(--titlebar-h) + 12px)', right: '12px' }}
         toastOptions={{
           duration: 2600,
-          style: { fontSize: 14, borderRadius: 12, border: '1px solid var(--color-line)', boxShadow: 'var(--shadow-pop)' },
+          style: {
+            fontSize: 14, fontWeight: 500, borderRadius: 12,
+            background: 'var(--color-panel)', color: 'var(--color-ink)',
+            border: '1px solid var(--color-line)', boxShadow: 'var(--shadow-toast)',
+          },
         }}
       />
     </HashRouter>

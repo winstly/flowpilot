@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Dialog } from 'radix-ui'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import { X, Sparkles, CheckCircle2 } from 'lucide-react'
 import TagInput from './TagInput'
 
@@ -21,7 +21,7 @@ export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, d
 
   const submit = () => {
     const name = pub.name.trim()
-    if (!name) return toast('请填写名称')
+    if (!name) return warn('请填写名称')
     onPublish({ name, desc: pub.desc.trim(), tags: [...pub.tags] })
     onOpenChange(false)
   }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { ok, warn, fail, info } from '@/lib/toast'
 import {
   Brain, Wrench, Puzzle, SquareTerminal, FileText, MessageSquareWarning,
   UserCheck, ChevronDown, LoaderCircle, Check,
@@ -223,7 +223,7 @@ export function TracePanel({ node, scrollRef, refresh }) {
                             )
                           }
                           refresh()
-                          toast('已记录你的确认')
+                          ok('已记录你的确认')
                         }}
                       />
                     )}
