@@ -90,15 +90,68 @@ function createWindow() {
 ipcMain.handle('settings:get', () => store.get())
 ipcMain.handle('settings:save', (_, row) => store.save(row))
 ipcMain.handle('settings:delete', (_, id) => store.remove(id))
-// 连接测试：OpenAI 兼容口探测（GET /models），不落库不计费
-ipcMain.handle('settings:test', async (_, { baseUrl, apiKey }) => {
-  try {
-    const url = baseUrl.replace(/\/+$/, '') + '/models'
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(8000) })
-    if (res.ok) return { ok: true, message: `连接成功（${res.status}）` }
-    return { ok: false, message: `服务返回 ${res.status}` }
-  } catch (e) {
-    return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+// 连接测试：多路径 + 多鉴权方式探测，不落库；404 时用 1-token 模型调用兜底
+ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, model }) => {
+  const base = (baseUrl || '').trim().replace(/\/+$/, '').replace(/\/(chat\/completions|messages)$/, '')
+  const key = (apiKey || '').trim()
+  if (!base) return { ok: false, message: '请先填写 Base URL' }
+  if (!key) return { ok: false, message: '请先填写 API Token' }
+  const pathOf = (u) => { try { return new URL(u).pathname } catch { return u } }
+
+  // 候选探测点：兼容 baseUrl 带/不带 /v1 的写法
+  const probeUrls = [...new Set([
+    `${base}/models`,
+    base.endsWith('/v1') ? `${base.slice(0, -3)}/models` : `${base}/v1/models`,
+  ])]
+  // 两种鉴权：OpenAI 系 Bearer / Anthropic 系 x-api-key
+  const authSets = [
+    { Authorization: `Bearer ${key}` },
+    { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+  ]
+
+  for (const url of probeUrls) {
+    let authRejected = false
+    for (const headers of authSets) {
+      try {
+        const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) })
+        if (res.ok) return { ok: true, message: `连接成功（GET ${pathOf(url)}）` }
+        if (res.status === 401 || res.status === 403) { authRejected = true; continue }
+        if (res.status !== 404) return { ok: false, message: `服务返回 ${res.status}（GET ${pathOf(url)}）` }
+      } catch (e) {
+        return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+      }
+    }
+    // 该路径存在但两种鉴权都被拒 → Token 问题，路径无需再试
+    if (authRejected) return { ok: false, message: '鉴权失败，请检查 API Token' }
+  }
+
+  // models 列表接口不存在（中转网关常见）：用最小模型调用兜底（约 1 token）
+  if (model) {
+    const posts = [
+      [`${base}/chat/completions`, { Authorization: `Bearer ${key}` },
+        { model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }],
+      [`${base}/messages`, { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+        { model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] }],
+    ]
+    for (const [url, headers, body] of posts) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body), signal: AbortSignal.timeout(15000),
+        })
+        if (res.ok) return { ok: true, message: `连接成功（POST ${pathOf(url)}，模型可用）` }
+        if (res.status !== 404 && res.status !== 401 && res.status !== 403) {
+          return { ok: false, message: `服务返回 ${res.status}（POST ${pathOf(url)}）` }
+        }
+      } catch (e) {
+        return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+      }
+    }
+  }
+
+  return {
+    ok: false,
+    message: `接口 404（已试 ${probeUrls.map(pathOf).join('、')}），请核对 Base URL${model ? '' : '；填写主模型后可再兜底验证'}`,
   }
 })
 

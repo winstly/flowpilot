@@ -33,7 +33,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
 
   const runTest = async () => {
     setTestState({ busy: true })
-    setTestState(await window.settings.test({ baseUrl: cfg.base_url, apiKey: cfg.api_key }))
+    setTestState(await window.settings.test({ baseUrl: cfg.base_url, apiKey: cfg.api_key, model: (cfg.models.main || '').trim() }))
   }
 
   const submit = async () => {
