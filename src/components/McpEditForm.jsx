@@ -9,6 +9,7 @@ import { tabItemCls } from '@/components/ui'
 export default function McpEditForm({ resource, detail, tagSuggestions = [], onCancel, onSave }) {
   const [tab, setTab] = useState('conn')
   const [syncing, setSyncing] = useState(false)
+  const [syncedTools, setSyncedTools] = useState(null)
   const [openTool, setOpenTool] = useState(null)
   const [form, setForm] = useState(() => ({
     name: resource.name,
@@ -29,18 +30,44 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     credentials: detail?.credentials || '',
   }))
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
+  const parseKV = (text) => Object.fromEntries(
+    text.split('\n').map((l) => l.split('=')).filter((p) => p[0]?.trim()),
+  )
+  // 真工具形状 {name, description, inputSchema} → 参数行；演示形状 {name, desc, params[]} 原样兼容
+  const paramsOf = (t) => t.params || Object.entries(t.inputSchema?.properties || {}).map(([name, v]) => ({
+    name,
+    type: Array.isArray(v.type) ? v.type.join('|') : v.type || 'string',
+    required: (t.inputSchema?.required || []).includes(name),
+    desc: v.description || '',
+  }))
 
-  const tools = detail?.tools || []
+  const tools = syncedTools ?? detail?.tools ?? []
   const toolNames = tools.map((t) => t.name)
   const transport = ['http', 'sse', 'websocket'].includes(form.type)
 
-  // 模拟向 MCP Server 重新拉取工具列表（工具与参数只读，服务端为唯一事实源）
-  const sync = () => {
+  // 向 MCP Server 真实拉取工具清单（服务端为唯一事实源）
+  const sync = async () => {
+    if (!window.mcp) return warn('桌面桥未就绪')
+    const isStdio = form.type === 'stdio'
+    if (isStdio && !form.command.trim()) return warn('请填写启动命令')
+    if (!isStdio && !form.url.trim()) return warn('请填写服务器地址')
     setSyncing(true)
-    setTimeout(() => {
-      setSyncing(false)
-      ok(`已从 MCP Server 同步 ${tools.length} 个工具`)
-    }, 800)
+    const r = await window.mcp.sync({
+      name: form.name || '未命名',
+      type: form.type,
+      command: form.command.trim(),
+      args: form.args.trim().split(/\s+/).filter(Boolean),
+      url: form.url.trim(),
+      env: parseKV(form.env),
+      headers: parseKV(form.headers),
+    })
+    setSyncing(false)
+    if (r.ok) {
+      setSyncedTools(r.tools)
+      ok(`已从 MCP Server 同步 ${r.tools.length} 个工具`)
+    } else {
+      fail(`同步失败：${r.message}`)
+    }
   }
 
   const submit = () => {
@@ -48,11 +75,9 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     if (transport && !form.url.trim() && !form.command.trim()) {
       return warn('请填写服务器地址或启动命令')
     }
-    const parseKV = (text) => Object.fromEntries(
-      text.split('\n').map((l) => l.split('=')).filter((p) => p[0]?.trim()),
-    )
     onSave({
       name: form.name.trim(),
+      tools,
       desc: form.desc.trim(),
       tags: form.tags,
       config: {
@@ -197,7 +222,7 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
           </div>
           {tools.length === 0 ? (
             <div className="px-4 py-5 text-center text-xs text-mute">
-              尚未同步到工具，保存连接信息后可重新同步
+              尚未同步到工具，点右上「重新同步」从服务器拉取
             </div>
           ) : (
             <div className="divide-y divide-line">
@@ -208,13 +233,13 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
                     onClick={() => setOpenTool(openTool === t.name ? null : t.name)}
                   >
                     <span className="font-mono text-xs font-semibold text-ink">{t.name}</span>
-                    <span className="flex-1 truncate text-xs text-mute">{t.desc}</span>
-                    <span className="flex-none text-xs text-mute">{t.params.length} 参数</span>
+                    <span className="flex-1 truncate text-xs text-mute">{t.desc ?? t.description}</span>
+                    <span className="flex-none text-xs text-mute">{paramsOf(t).length} 参数</span>
                     <ChevronDown size={13} className={`flex-none text-mute transition-transform ${openTool === t.name ? 'rotate-180' : ''}`} />
                   </button>
                   {openTool === t.name && (
                     <div className="anim-drop bg-canvas px-4 py-2.5">
-                      {t.params.map((p) => (
+                      {paramsOf(t).map((p) => (
                         <div key={p.name} className="flex items-baseline gap-2 py-0.5 text-xs">
                           <span className="font-mono text-ink">{p.name}</span>
                           <span className="text-mute">{p.type}</span>

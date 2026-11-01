@@ -7,6 +7,14 @@ contextBridge.exposeInMainWorld('settings', {
   test: (cfg) => ipcRenderer.invoke('settings:test', cfg),
 })
 
+contextBridge.exposeInMainWorld('mcp', {
+  list: () => ipcRenderer.invoke('mcp:list'),
+  save: (row) => ipcRenderer.invoke('mcp:save', row),
+  remove: (id) => ipcRenderer.invoke('mcp:remove', id),
+  sync: (cfgOrId) => ipcRenderer.invoke('mcp:sync', cfgOrId),
+  call: (payload) => ipcRenderer.invoke('mcp:call', payload),
+})
+
 contextBridge.exposeInMainWorld('agent', {
   start: (payload) => ipcRenderer.invoke('agent:start', payload),
   abort: () => ipcRenderer.invoke('agent:abort'),

@@ -4,6 +4,7 @@ const path = require('node:path')
 const fs = require('node:fs')
 const store = require('./store.cjs')
 const AgentHost = require('./agent-host.cjs')
+const McpManager = require('./mcp.cjs')
 
 app.setName('FlowPilot')
 Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
@@ -279,6 +280,29 @@ const emitAgentEvent = (ev) => {
   for (const w of BrowserWindow.getAllWindows()) w.webContents.send('agent:event', ev)
 }
 const agentHost = new AgentHost(store, emitAgentEvent)
+
+// MCP：配置入库 + 客户端连接/同步/调用（@modelcontextprotocol/client）
+const mcpManager = new McpManager()
+ipcMain.handle('mcp:list', () => store.listMcpServers())
+ipcMain.handle('mcp:save', (_, row) => store.saveMcpServer(row))
+ipcMain.handle('mcp:remove', async (_, id) => { await mcpManager.disconnect(String(id)); return store.removeMcpServer(id) })
+ipcMain.handle('mcp:sync', async (_, cfgOrId) => {
+  const row = typeof cfgOrId === 'object' ? cfgOrId : store.getMcpServer(cfgOrId)
+  if (!row) return { ok: false, message: '未找到该 MCP 服务器配置' }
+  if (row.type === 'stdio' && !row.command) return { ok: false, message: '请填写启动命令' }
+  if (row.type !== 'stdio' && !row.url) return { ok: false, message: '请填写服务器地址' }
+  try {
+    const tools = await mcpManager.sync(row)
+    if (row.id) store.updateMcpTools(row.id, tools)
+    return { ok: true, tools }
+  } catch (e) {
+    return { ok: false, message: String(e?.message || e).slice(0, 200) }
+  }
+})
+ipcMain.handle('mcp:call', async (_, { name, tool, args }) => {
+  try { return { ok: true, result: await mcpManager.callTool(name, tool, args) } }
+  catch (e) { return { ok: false, message: String(e?.message || e).slice(0, 200) } }
+})
 ipcMain.handle('agent:start', (_, payload) => {
   const r = agentHost.start(payload)
   // done 只给 headless 用；渲染层靠事件流

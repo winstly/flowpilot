@@ -36,6 +36,20 @@ function init(userDataDir) {
       UNIQUE (session_id, seq)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS entries_by_session ON entries (session_id, seq);
+    CREATE TABLE IF NOT EXISTS mcp_servers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      type TEXT NOT NULL DEFAULT 'stdio',
+      command TEXT NOT NULL DEFAULT '',
+      args TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(args)),
+      url TEXT NOT NULL DEFAULT '',
+      env TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(env)),
+      headers TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(headers)),
+      enabled INTEGER NOT NULL DEFAULT 1,
+      tools TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(tools)),
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    ) STRICT;
   `)
 }
 
@@ -75,4 +89,31 @@ function addEntry(sessionId, kind, role, record) {
 const listEntries = (sessionId) =>
   db.prepare('SELECT * FROM entries WHERE session_id = ? ORDER BY seq').all(sessionId)
 
-module.exports = { init, get, save, createSession, setSessionStatus, addEntry, listEntries }
+const listMcpServers = () =>
+  db.prepare('SELECT * FROM mcp_servers ORDER BY id').all()
+
+const getMcpServer = (id) => db.prepare('SELECT * FROM mcp_servers WHERE id = ?').get(id)
+
+function saveMcpServer(row) {
+  const data = {
+    name: row.name, type: row.type || 'stdio',
+    command: row.command || '', args: JSON.stringify(row.args || []),
+    url: row.url || '', env: JSON.stringify(row.env || {}), headers: JSON.stringify(row.headers || {}),
+    enabled: row.enabled ? 1 : 0, tools: JSON.stringify(row.tools || []),
+  }
+  if (row.id) {
+    db.prepare(`UPDATE mcp_servers SET name=?, type=?, command=?, args=?, url=?, env=?, headers=?, enabled=?, tools=?, updated_at=datetime('now','localtime') WHERE id=?`)
+      .run(data.name, data.type, data.command, data.args, data.url, data.env, data.headers, data.enabled, data.tools, row.id)
+    return row.id
+  }
+  const r = db.prepare('INSERT INTO mcp_servers (name, type, command, args, url, env, headers, enabled, tools) VALUES (?,?,?,?,?,?,?,?,?)')
+    .run(data.name, data.type, data.command, data.args, data.url, data.env, data.headers, data.enabled, data.tools)
+  return Number(r.lastInsertRowid)
+}
+
+const removeMcpServer = (id) => db.prepare('DELETE FROM mcp_servers WHERE id = ?').run(id)
+
+const updateMcpTools = (id, tools) =>
+  db.prepare(`UPDATE mcp_servers SET tools = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(JSON.stringify(tools || []), id)
+
+module.exports = { init, get, save, createSession, setSessionStatus, addEntry, listEntries, listMcpServers, getMcpServer, saveMcpServer, removeMcpServer, updateMcpTools }
