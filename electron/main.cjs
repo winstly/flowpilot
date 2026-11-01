@@ -2,6 +2,7 @@
 const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
+const store = require('./store.cjs')
 
 app.setName('FlowPilot')
 Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
@@ -85,7 +86,24 @@ function createWindow() {
   ipcMain.handle('win:is-maximized', () => win.isMaximized())
 }
 
+// 模型等级配置：SQLite 持久化（app.getPath('userData')/flowpilot.db）
+ipcMain.handle('settings:list', () => store.list())
+ipcMain.handle('settings:save', (_, row) => store.save(row))
+ipcMain.handle('settings:delete', (_, id) => store.remove(id))
+// 连接测试：OpenAI 兼容口探测（GET /models），不落库不计费
+ipcMain.handle('settings:test', async (_, { baseUrl, apiKey }) => {
+  try {
+    const url = baseUrl.replace(/\/+$/, '') + '/models'
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(8000) })
+    if (res.ok) return { ok: true, message: `连接成功（${res.status}）` }
+    return { ok: false, message: `服务返回 ${res.status}` }
+  } catch (e) {
+    return { ok: false, message: e.name === 'TimeoutError' ? '连接超时' : e.message }
+  }
+})
+
 app.whenReady().then(() => {
+  store.init(app.getPath('userData'))
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

@@ -1,11 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { MessageSquareText, Store, BookOpen, Plus, Sparkles } from 'lucide-react'
+import { MessageSquareText, Store, BookOpen, Settings2, Plus, Sparkles } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const NAV = [
   { to: '/tasks', icon: MessageSquareText, label: '任务与对话' },
   { to: '/market', icon: Store, label: '资源与能力' },
   { to: '/insights', icon: BookOpen, label: '团队知识库' },
+  { to: '/settings', icon: Settings2, label: '模型配置' },
 ]
 
 export default function Sidebar() {

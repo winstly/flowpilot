@@ -6,6 +6,7 @@ import TasksPage from '@/pages/TasksPage'
 import RunPage from '@/pages/RunPage'
 import MarketPage from '@/pages/MarketPage'
 import InsightsPage from '@/pages/InsightsPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 function Shell() {
   const { pathname } = useLocation()
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/market" element={<MarketPage />} />
             <Route path="/insights" element={<InsightsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
           {/* Agent 管理无独立路由：Market 的 Agent 标签 */}
           <Route path="/agents" element={<Navigate to="/market?tab=Agent" replace />} />
