@@ -119,7 +119,7 @@ ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, models }) => {
     if (g) g.labels.push(s.label)
     else groups.push({ model: s.model, labels: [s.label] })
   }
-  const labelOf = (g) => (g.labels.length === slots.length ? '全部槽位' : g.labels.join('、'))
+  const labelOf = (g) => (slots.length > 1 && g.labels.length === slots.length ? '全部槽位' : g.labels.join('、'))
 
   // 候选根：base 与 base/v1 + 同主机兄弟挂载（…/anthropic 型中转的 OpenAI 口常在 …/v1）
   const roots = [base, base.endsWith('/v1') ? base.slice(0, -3) : `${base}/v1`]

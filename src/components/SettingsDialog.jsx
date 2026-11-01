@@ -100,10 +100,10 @@ export default function SettingsDialog({ open, onOpenChange }) {
               ))}
             </div>
 
-            {/* 连接测试 */}
-            <div className="mt-5 flex items-center gap-2.5">
+            {/* 连接测试：按钮定宽独立成行，诊断报告在下方整行呈现（可完整换行） */}
+            <div className="mt-5">
               <button
-                className="btn-outline !text-xs"
+                className="btn-outline w-28 justify-center whitespace-nowrap !text-xs"
                 disabled={testState?.busy || !cfg.base_url.trim() || !cfg.api_key.trim()}
                 onClick={runTest}
               >
@@ -111,10 +111,12 @@ export default function SettingsDialog({ open, onOpenChange }) {
                 {testState?.busy ? '测试中…' : '测试连接'}
               </button>
               {testState && !testState.busy && (
-                <span className={`flex items-center gap-1 text-xs ${testState.ok ? 'text-ok' : 'text-fail'}`}>
-                  {testState.ok ? <CircleCheck size={13} /> : <CircleAlert size={13} />}
-                  {testState.message}
-                </span>
+                <div className={`mt-2.5 flex items-start gap-1.5 rounded-btn px-3 py-2.5 text-xs leading-relaxed ${testState.ok ? 'bg-ok-soft text-ok' : 'bg-fail-soft text-fail'}`}>
+                  {testState.ok
+                    ? <CircleCheck size={13} className="mt-0.5 flex-none" />
+                    : <CircleAlert size={13} className="mt-0.5 flex-none" />}
+                  <span className="min-w-0 break-words">{testState.message}</span>
+                </div>
               )}
             </div>
 
