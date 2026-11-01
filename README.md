@@ -16,6 +16,16 @@ npm run build
 npm run preview
 ```
 
+## 桌面端（Electron）
+
+```bash
+npm run dev:desktop    # Vite 开发服 + 桌面壳
+npm run build:desktop  # 构建产物 + 以桌面模式启动
+```
+
+无原生标题栏与菜单（frame: false），自绘 32px 标题条带窗口控制钮；
+Web 构建不受影响（标题条仅在 `window.desktop` 存在时渲染）。
+
 ## 目录结构
 
 ```

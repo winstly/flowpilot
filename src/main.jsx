@@ -5,6 +5,9 @@ import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './theme.css'
 
+// 桌面壳注入高度偏移标记（标题条 32px；Web 不打标）
+if (window.desktop) document.documentElement.classList.add('is-desktop')
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>

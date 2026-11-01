@@ -54,7 +54,9 @@
 }
 
 @layer base {
-  html { font-family: var(--font-sans); }
+  /* 桌面标题条高度：Web 为 0，Electron 壳由 main.jsx 注入 is-desktop 覆盖 */
+  html { font-family: var(--font-sans); --titlebar-h: 0px; }
+  html.is-desktop { --titlebar-h: 32px; }
   body { background: var(--color-canvas); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
   ::selection { background: var(--color-brand-line); }
   /* 焦点环：品牌实色 3:1+ 对比（浅色 line2 不足以作可见焦点） */
@@ -322,6 +324,39 @@
 .radix-item { padding: 8px 12px; font-size: 14px; outline: none; cursor: pointer; }
 .radix-item[data-highlighted] { background: var(--color-brand-soft); color: var(--color-brand-deep); }
 .radix-item[data-state="checked"] { color: var(--color-brand-deep); font-weight: 600; }
+
+/* ============ 自绘标题条（Electron frame:false） ============ */
+.titlebar {
+  display: flex; align-items: stretch; justify-content: space-between;
+  height: 32px; flex: none;
+  position: relative; z-index: 100; /* 恒在遮罩/抽屉/弹窗之上，窗口控制永远可点 */
+  background: var(--color-panel);
+  border-bottom: 1px solid var(--color-line);
+  -webkit-app-region: drag;
+  user-select: none; cursor: default;
+}
+.titlebar-drag {
+  display: flex; align-items: center; gap: 7px;
+  padding-left: 12px; min-width: 0;
+}
+.titlebar-controls { display: flex; -webkit-app-region: no-drag; }
+
+/* caption 钮：46×32 原生命中区，hover 微底；关闭 hover 用 Windows 原生红 */
+.caption-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 32px;
+  color: var(--color-ink2); background: transparent; border: none;
+  transition: background .12s ease, color .12s ease;
+}
+.caption-btn:hover { background: var(--color-subtle); color: var(--color-ink); }
+.caption-btn:active { background: var(--color-mute-soft); }
+.caption-btn-close:hover { background: #c42b1c; color: #fff; }
+.caption-btn-close:active { background: #b02717; }
+
+/* 可拖拽热区标记：品牌行 / 其余交互元素显式 no-drag */
+.titlebar button, .titlebar a { -webkit-app-region: no-drag; }
+.sb-brand { -webkit-app-region: drag; }
+.sb-brand button { -webkit-app-region: no-drag; }
 
 /* ============ 侧边栏 ≤720px 折叠 ============ */
 @media (max-width: 720px) {

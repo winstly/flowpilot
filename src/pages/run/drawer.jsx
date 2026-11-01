@@ -10,7 +10,7 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
   return (
     <>
       <div className="anim-fade fixed inset-0 z-30 bg-[rgba(23,26,33,.24)]" onClick={onClose} aria-hidden />
-      <aside className="anim-slide fixed bottom-0 right-0 top-0 z-40 flex w-[400px] max-w-[92vw] flex-col border-l border-line bg-panel shadow-drawer">
+      <aside className="anim-slide fixed bottom-0 right-0 top-[var(--titlebar-h)] z-40 flex w-[400px] max-w-[92vw] flex-col border-l border-line bg-panel shadow-drawer">
         {mode === 'node' && node && (
           <>
             <div className="flex items-center justify-between border-b border-line px-5 py-4">

@@ -1,0 +1,77 @@
+// FlowPilot 桌面壳：无原生标题栏 / 无原生菜单工具栏，渲染层为现有 Vite + React
+const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron')
+const path = require('node:path')
+const fs = require('node:fs')
+
+app.setName('FlowPilot')
+Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
+
+const isDev = process.argv.includes('--dev')
+
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1440,
+    height: 920,
+    minWidth: 1024,
+    minHeight: 680,
+    frame: false, // 无原生标题栏；Windows 下保留粗边框，边缘拉伸 / Win+方向键贴靠仍可用
+    backgroundColor: '#f6f8fa',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+
+  win.once('ready-to-show', () => {
+    win.show()
+    // 验收用截图钩子：SNAPSHOT=path [SNAPSHOT_ROUTE=tasks/T-100/run] npx electron .
+    // 注意路由不带前导斜杠（Git Bash 的 MSYS 会改写 / 开头的环境变量值）
+    if (process.env.SNAPSHOT) {
+      setTimeout(async () => {
+        if (process.env.SNAPSHOT_ROUTE) {
+          await win.webContents.executeJavaScript(`location.hash = '#/' + ${JSON.stringify(process.env.SNAPSHOT_ROUTE)}`)
+          await new Promise((r) => setTimeout(r, 600))
+        }
+        const image = await win.webContents.capturePage()
+        fs.writeFileSync(process.env.SNAPSHOT, image.toPNG())
+        app.exit(0)
+      }, 800)
+    }
+  })
+
+  if (isDev) {
+    win.loadURL('http://localhost:5173')
+  } else {
+    win.loadFile(path.join(__dirname, '../dist/index.html'))
+  }
+
+  // 外部链接走系统浏览器，站内保持单窗口
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:/.test(url)) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
+  // 最大化状态 → 渲染层窗口控制字形切换
+  const emitMax = () => win.webContents.send('win:maximized', win.isMaximized())
+  win.on('maximize', emitMax)
+  win.on('unmaximize', emitMax)
+
+  ipcMain.handle('win:minimize', () => win.minimize())
+  ipcMain.handle('win:toggle-maximize', () => (win.isMaximized() ? win.unmaximize() : win.maximize()))
+  ipcMain.handle('win:close', () => win.close())
+  ipcMain.handle('win:is-maximized', () => win.isMaximized())
+}
+
+app.whenReady().then(() => {
+  createWindow()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})

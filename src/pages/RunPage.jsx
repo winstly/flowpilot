@@ -159,7 +159,7 @@ export default function RunPage() {
   }
 
   return (
-    <div className="anim-page fixed inset-0 z-50 flex flex-col bg-canvas">
+    <div className="anim-page flex h-full flex-col bg-canvas">
       {/* 工具栏 */}
       <header className="flex h-14 flex-none items-center gap-3 border-b border-line bg-panel px-4">
         <button className="btn-ghost" onClick={() => navigate('/tasks')}>

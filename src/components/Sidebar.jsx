@@ -17,7 +17,7 @@ export default function Sidebar() {
   return (
     <aside className="sb flex w-[244px] flex-none flex-col border-r border-line bg-panel px-3.5 py-4">
       {/* 品牌区 */}
-      <div className="mb-5 flex items-center gap-2.5 px-1.5">
+      <div className="sb-brand mb-5 flex items-center gap-2.5 px-1.5">
         <span className="flex size-8 flex-none items-center justify-center rounded-btn bg-primary text-sm text-white">
           <Sparkles size={15} />
         </span>
