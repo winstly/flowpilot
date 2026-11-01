@@ -9,6 +9,8 @@
     "start": "electron ."
   },
   "dependencies": {
+    "@earendil-works/pi-agent-core": "^1.4.0",
+    "@earendil-works/pi-ai": "^1.4.0",
     "jszip": "^3.10.2",
     "lucide-react": "^0.545.0",
     "radix-ui": "^1.4.2",

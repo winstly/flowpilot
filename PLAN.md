@@ -62,6 +62,39 @@ agentLoop(prompts, context, config, signal, streamFn) → EventStream<AgentEvent
 - JSONL 会话文件（`session-manager.ts` 的 `~/.pi/agent/sessions/*.jsonl`）——被 SQLite 替代；
 - CLI 安装器/自动更新/Nix 打包——不适用。
 
+## 1.5 Agent 运行时设计（主/子双层 · 已实测贯通 2026-11-02）
+
+```
+主 Agent（supervisor：一次 pi agentLoop / 监督点）
+  ├─ ① 任务展开  任务目标 + 绑定工作流 → 每节点执行简报（目标/验收标准）
+  ├─ ② 节点审查  子 Agent 产出 → 通过 / 打回重跑（对应现有"打回重跑×N"语义）
+  ├─ ③ 纠错转译  用户会话纠错 → 判定受影响节点 → 重跑简报（steering 队列）
+  └─ ④ 复盘合成  全节点结果 → retro 真实报告（数据从 entries/tool_calls 聚合）
+        │ 调度 = 确定性代码（拓扑序 · 独立节点并行 · 审查节点挂起等人工确认）
+        ▼
+子 Agent（worker：每节点一次 pi agentLoop，可多实例并行）
+  └─ 入：节点简报 + 上游产出  →  出：summary + artifact，状态 done/fail
+      模型 = 节点声明的槽位（app_config.models[slot]，未声明用任务默认）
+```
+
+**关键决策**：
+- **调度确定性 + 判断智能化**：Workflow 是预绑的 DAG，调度必须确定、可观测、崩溃可恢复
+  （对应桌面铁律"动作与状态严格真实对应"）；LLM 用在四个"判断点"，不做 token 级编排。
+  备选方案（主 Agent 持 `dispatch_node` 工具全自主调度）灵活但不可预测、耗 token，
+  适合探索型任务，不适合工作流工作室，暂不采用。
+- **pi 接线（已实测）**：`agentLoop(prompts, context, config, signal, streamFn)`，
+  `streamFn = (model, ctx, opts) => openai-completions 的 streamSimple(model, ctx, opts)`；
+  `convertToLlm` 标准消息用恒等转换；**错误编码在流内**（stopReason:'error'），
+  消费端必须检出，不能只看是否抛异常。
+- **模型路由（已实测）**：网关 `xiaomi-token-plan-cn`（pi 目录内置 provider），
+  官方模型 ID = `mimo-v2.6-pro`（重量档）/ `mimo-v2.6-flash`（轻量档）——
+  注意：家族名 `mimo-v2.6` 会被 400 拒绝，必须带强度后缀。
+- **thinking 流**：mimo-v2.6-pro 的流式事件含 thinking 块，entries 的 'think'
+  kind 正好承接，Run 会话可渲染思考过程。
+
+**验证证据**：`scripts/smoke-pi.cjs`（读本机真实配置）——层1 provider 直连 +
+层2 agentLoop turn 均返回真实文本（正常 / 链路贯通）。
+
 ## 2. 总体架构
 
 ```
