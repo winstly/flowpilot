@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 const store = require('./store.cjs')
+const AgentHost = require('./agent-host.cjs')
 
 app.setName('FlowPilot')
 Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
@@ -272,6 +273,19 @@ ipcMain.handle('settings:test', async (_, { baseUrl, apiKey, models }) => {
   }
   return { ok: false, message: `接口无 models 列表（已试 ${[...new Set(tried)].join('、')}），请填写模型槽位后验证模型可用性` }
 })
+
+// Agent 宿主：子 Agent 执行 + 拓扑调度 + 事件入库，事件推送到所有窗口
+const emitAgentEvent = (ev) => {
+  for (const w of BrowserWindow.getAllWindows()) w.webContents.send('agent:event', ev)
+}
+const agentHost = new AgentHost(store, emitAgentEvent)
+ipcMain.handle('agent:start', (_, payload) => {
+  const r = agentHost.start(payload)
+  // done 只给 headless 用；渲染层靠事件流
+  return r.ok ? { ok: true, runId: r.runId, sessionId: r.sessionId } : r
+})
+ipcMain.handle('agent:abort', () => agentHost.abort())
+ipcMain.handle('agent:state', () => agentHost.state())
 
 app.whenReady().then(() => {
   store.init(app.getPath('userData'))

@@ -100,10 +100,59 @@ export default function RunPage() {
       }
     })
   }, [task])
+
+  // 真实执行：agent 事件流 → 画布节点状态实时更新（先库后推，重载可续读）
+  useEffect(() => {
+    if (!task || !window.agent) return
+    window.agent.state().then((s) => {
+      if (s.running) {
+        setRunState('running')
+        for (const [id, st] of Object.entries(s.statuses || {})) {
+          const n = task.board.find((x) => x.id === id)
+          if (n) n.status = st
+        }
+        force()
+      }
+    })
+    const off = window.agent.onEvent((ev) => {
+      if (ev.type === 'run_start') {
+        setRunState('running')
+        task.board.forEach((n) => { n.status = 'idle'; n.output = ''; n.duration = '' })
+      } else if (ev.type === 'node_start') {
+        const n = task.board.find((x) => x.id === ev.nodeId)
+        if (n) n.status = 'running'
+      } else if (ev.type === 'node_end') {
+        const n = task.board.find((x) => x.id === ev.nodeId)
+        if (n) {
+          n.status = ev.status
+          n.output = ev.output || ev.error || ''
+          if (ev.durationMs) n.duration = `${Math.round(ev.durationMs / 1000)}s`
+        }
+      } else if (ev.type === 'run_end') {
+        setRunState('idle')
+        if (ev.status === 'done') ok(`执行完成：${ev.done}/${ev.total} 节点成功`)
+        else fail(ev.status === 'aborted' ? '执行已中止' : `执行失败${ev.error ? `：${ev.error}` : ''}`)
+      }
+      force()
+    })
+    return off
+  }, [task])
+
+  const startRun = () => {
+    if (!window.agent) return warn('桌面桥未就绪')
+    window.agent
+      .start({
+        title: task.title,
+        nodes: task.board.map((n) => ({ id: n.id, name: n.name, agent: n.agent, type: n.type, modelSlot: n.modelSlot })),
+        edges,
+      })
+      .then((r) => { if (r && !r.ok) warn(r.message || '启动失败') })
+  }
   const [chatText, setChatText] = useState('')
   const [zoom, setZoom] = useState(1)
   const [reportOpen, setReportOpen] = useState(false)
   const [pubOpen, setPubOpen] = useState(false)
+  const [runState, setRunState] = useState('idle')
   const scrollRef = useRef(null)
 
   const edges = useMemo(() => {
@@ -175,21 +224,17 @@ export default function RunPage() {
           <MessagesSquare size={14} />
           对话
         </button>
-        {/* 状态互斥：执行前→开始执行 / 执行中→运行指示 / 结束→任务复盘 */}
-        {task.status === 'draft' && (
-          <button
-            className="btn-primary"
-            onClick={() => info('演示环境：开始执行不会真正运行任务')}
-          >
-            <Play size={14} className="fill-white" />
-            开始执行
-          </button>
-        )}
-        {task.status === 'running' && (
+        {/* 状态互斥：执行中→运行指示 / 否则→开始执行（可重跑） */}
+        {runState === 'running' ? (
           <span className="flex items-center gap-2 rounded-btn bg-brand-soft px-3.5 py-2 text-sm font-medium text-brand-deep">
             <LoaderCircle size={14} className="animate-spin" />
             执行中
           </span>
+        ) : (
+          <button className="btn-primary" onClick={startRun}>
+            <Play size={14} className="fill-white" />
+            开始执行
+          </button>
         )}
         {(task.status === 'done' || task.status === 'fail') && (
           <button className="btn-outline" onClick={() => setReportOpen(true)}>

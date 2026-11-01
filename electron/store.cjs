@@ -18,6 +18,24 @@ function init(userDataDir) {
       models TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(models)),
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     ) STRICT;
+    CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL CHECK (status IN ('idle','running','waiting','done','fail','aborted')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      seq INTEGER NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('user','assistant','tool_call','tool_result','think','notice','error')),
+      role TEXT,
+      record TEXT NOT NULL CHECK (json_valid(record)),
+      created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      UNIQUE (session_id, seq)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS entries_by_session ON entries (session_id, seq);
   `)
 }
 
@@ -39,4 +57,22 @@ function save(cfg) {
   `).run(cfg.base_url ?? '', cfg.api_key ?? '', JSON.stringify(cfg.models ?? {}))
 }
 
-module.exports = { init, get, save }
+function createSession(title) {
+  const r = db.prepare(`INSERT INTO sessions (title, status) VALUES (?, 'running')`).run(title || '')
+  return Number(r.lastInsertRowid)
+}
+
+const setSessionStatus = (id, status) =>
+  db.prepare(`UPDATE sessions SET status = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(status, id)
+
+function addEntry(sessionId, kind, role, record) {
+  const seq = Number(db.prepare('SELECT COALESCE(MAX(seq), 0) + 1 AS s FROM entries WHERE session_id = ?').get(sessionId).s)
+  db.prepare('INSERT INTO entries (session_id, seq, kind, role, record) VALUES (?,?,?,?,?)')
+    .run(sessionId, seq, kind, role ?? null, JSON.stringify(record ?? {}))
+  return seq
+}
+
+const listEntries = (sessionId) =>
+  db.prepare('SELECT * FROM entries WHERE session_id = ? ORDER BY seq').all(sessionId)
+
+module.exports = { init, get, save, createSession, setSessionStatus, addEntry, listEntries }

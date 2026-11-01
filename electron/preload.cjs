@@ -7,6 +7,17 @@ contextBridge.exposeInMainWorld('settings', {
   test: (cfg) => ipcRenderer.invoke('settings:test', cfg),
 })
 
+contextBridge.exposeInMainWorld('agent', {
+  start: (payload) => ipcRenderer.invoke('agent:start', payload),
+  abort: () => ipcRenderer.invoke('agent:abort'),
+  state: () => ipcRenderer.invoke('agent:state'),
+  onEvent: (cb) => {
+    const listener = (_, ev) => cb(ev)
+    ipcRenderer.on('agent:event', listener)
+    return () => ipcRenderer.removeListener('agent:event', listener)
+  },
+})
+
 contextBridge.exposeInMainWorld('desktop', {
   platform: process.platform,
   minimize: () => ipcRenderer.invoke('win:minimize'),

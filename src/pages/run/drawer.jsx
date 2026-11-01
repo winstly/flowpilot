@@ -24,6 +24,12 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
                 <Row k="耗时" v={node.duration} />
                 <Row k="纠正次数" v={node.corrections} />
               </dl>
+              {node.output && (
+                <div className="mt-3">
+                  <div className="mb-1 block-label">产出</div>
+                  <div className="rounded-btn bg-subtle px-3 py-2.5 text-xs leading-relaxed text-ink">{node.output}</div>
+                </div>
+              )}
               <TracePanel node={node} scrollRef={bodyRef} refresh={refresh} key={node.id} />
             </div>
           </>
