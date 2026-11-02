@@ -66,7 +66,7 @@ function MarketShell({ tab, setTab }) {
   const [confirmDel, setConfirmDel] = useState(null)
   const [pubOpen, setPubOpen] = useState(false)
   // 申请发布统一表单：基本信息（名称/说明/标签）+ 类型专属（MCP 地址 / Rule 内容 / Skill 文件）
-  const [pub, setPub] = useState({ name: '', desc: '', tags: [], addr: '', content: '' })
+  const [pub, setPub] = useState({ name: '', desc: '', tags: [], content: '' })
   const [pubTree, setPubTree] = useState(null) // Skill 上传的文件树
   const [editTree, setEditTree] = useState(null) // Skill 编辑时重新上传的文件树
   const openNewAgentRef = useRef(null)
@@ -147,28 +147,11 @@ function MarketShell({ tab, setTab }) {
     if (!name) return warn('请填写名称')
     if (tab === 'Skill' && !pubTree) return warn('请先上传 ZIP 或选择文件夹')
     if (tab === 'Rule' && !pub.content.trim()) return warn('请填写规则内容')
-    if (tab === 'MCP' && !pub.addr.trim()) return warn('请填写服务器地址')
     const id = `${tab}-${Date.now()}`
     const desc = pub.desc.trim() || '（待补充说明）'
     // 类型专属内容入库，「查看」详情即可直接预览
     if (tab === 'Rule') ruleDetails[id] = { content: pub.content.trim() }
     if (tab === 'Skill') skillDetails[id] = { tree: pubTree }
-    if (tab === 'MCP') {
-      const addr = pub.addr.trim()
-      const stdio = !/^https?:\/\//i.test(addr)
-      mcpDetails[id] = {
-        server_name: id,
-        type: stdio ? 'stdio' : 'http',
-        url: stdio ? null : addr,
-        command: stdio ? addr.split(/\s+/)[0] : null,
-        args: stdio ? addr.split(/\s+/).slice(1) : [],
-        env: {}, headers: {},
-        allowedTools: [], disabledTools: [], alwaysAllow: [],
-        credentials: '', timeout: 30000, initTimeout: 10000, disabled: false,
-        instructions: desc, description: desc,
-        tools: [], // 审批接入后自动从 MCP Server 加载
-      }
-    }
     setList((l) => [
       {
         id, kind: tab, name, author: '檀小猊', version: 'v1.0',
@@ -178,16 +161,36 @@ function MarketShell({ tab, setTab }) {
       },
       ...l,
     ])
-    setPub({ name: '', desc: '', tags: [], addr: '', content: '' })
+    setPub({ name: '', desc: '', tags: [], content: '' })
     setPubTree(null)
     setPubOpen(false)
     ok(`「${name}」已提交申请，待审批`)
   }
 
+  // MCP 发布：完整连接配置随申请入库（与编辑表单同源，args/env 不再丢失）
+  const publishMcp = ({ name, desc, tags, config, tools }) => {
+    const nm = (name || '').trim()
+    if (!nm) return warn('请填写名称')
+    const id = `MCP-${Date.now()}`
+    const description = (desc || '').trim() || '（待补充说明）'
+    mcpDetails[id] = {
+      ...config, server_name: id, tools: tools || [],
+      disabled: false, instructions: config?.instructions || description, description,
+    }
+    setList((l) => [{
+      id, kind: 'MCP', name: nm, author: '檀小猊', version: 'v1.0',
+      status: '待发布', rating: 0, reuses: 0, tags: [...(tags || [])],
+      desc: description,
+      versions: [{ v: 'v1.0', date: new Date().toISOString().slice(0, 10), note: '发布申请（待审批）' }],
+    }, ...l])
+    setPubOpen(false)
+    ok(`「${nm}」已提交申请，待审批`)
+  }
+
   // Workflow 的发布入口在任务结束后（任务卡 / 运行页），市场页不提供申请发布
   const canPublishHere = tab !== 'Workflow'
   const openPublish = () => {
-    setPub({ name: '', desc: '', tags: [], addr: '', content: '' })
+    setPub({ name: '', desc: '', tags: [], content: '' })
     setPubTree(null)
     setRuleTab('write')
     setPubOpen(true)
@@ -518,8 +521,31 @@ function MarketShell({ tab, setTab }) {
         <Dialog.Portal>
           <Dialog.Overlay className="radix-overlay fixed inset-0 z-40" />
           <Dialog.Content className={`radix-content osd-shell fixed left-1/2 top-[max(80px,15vh)] z-50 flex max-h-[82vh] -translate-x-1/2 flex-col p-0 ${
-            tab === 'Skill' ? 'w-[560px]' : 'w-[480px]'
+            tab === 'Skill' || tab === 'MCP' ? 'w-[560px]' : 'w-[480px]'
           } max-w-[calc(100vw-40px)]`}>
+           {tab === 'MCP' ? (
+            <div className="dlg-body">
+              <div className="flex items-start justify-between px-6 pt-6">
+                <div>
+                  <div className="mb-1 block-label">发布申请</div>
+                  <Dialog.Title className="text-sm font-semibold text-ink">向团队发布 MCP</Dialog.Title>
+                </div>
+                <Dialog.Close asChild>
+                  <button className="iconbtn" aria-label="关闭"><X size={16} /></button>
+                </Dialog.Close>
+              </div>
+              {/* 与「编辑」同一张表单：连接参数（command/args/env…）完整可填 */}
+              <McpEditForm
+                resource={{ name: '', desc: '', tags: [] }}
+                detail={null}
+                tagSuggestions={PUB_TAG_SUGGEST.MCP || []}
+                submitLabel="提交申请"
+                notice="提交后进入「待发布」状态，由团队负责人审批后生效。"
+                onCancel={() => setPubOpen(false)}
+                onSave={publishMcp}
+              />
+            </div>
+           ) : (
            <div className="dlg-body p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -559,18 +585,6 @@ function MarketShell({ tab, setTab }) {
             </div>
 
             {/* 类型专属内容 */}
-            {tab === 'MCP' && (
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-ink">服务器地址 <span className="text-fail">*</span></label>
-                <input
-                  className="field font-mono !text-xs"
-                  placeholder="https://… 或 npx -y @org/mcp-server"
-                  value={pub.addr}
-                  onChange={(e) => setPub({ ...pub, addr: e.target.value })}
-                />
-                <p className="mt-1 text-xs text-mute">审批接入后自动从 MCP Server 加载工具与参数配置。</p>
-              </div>
-            )}
             {tab === 'Rule' && (
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between">
@@ -617,6 +631,7 @@ function MarketShell({ tab, setTab }) {
               <button className="btn-primary" onClick={publish}>提交申请</button>
             </div>
            </div>
+           )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

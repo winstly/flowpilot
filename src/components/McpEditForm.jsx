@@ -6,7 +6,7 @@ import { tabItemCls } from '@/components/ui'
 
 // MCP 编辑：基本信息（名称/说明/标签，与申请发布弹窗一致）+ 连接/参数/权限三组；工具列表由 MCP Server 自动加载，只读
 // props: resource（资源卡数据）, detail（mcpDetails 配置，可能为 null）, tagSuggestions, onCancel, onSave({ name, desc, tags, config })
-export default function McpEditForm({ resource, detail, tagSuggestions = [], onCancel, onSave }) {
+export default function McpEditForm({ resource, detail, tagSuggestions = [], onCancel, onSave, submitLabel = '保存草稿', notice }) {
   const [tab, setTab] = useState('conn')
   const [syncing, setSyncing] = useState(false)
   const [syncedTools, setSyncedTools] = useState(null)
@@ -15,7 +15,7 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     name: resource.name,
     desc: resource.desc || '',
     tags: [...(resource.tags || [])],
-    type: detail?.type || 'http',
+    type: detail?.type || 'stdio',
     url: detail?.url || '',
     command: detail?.command || '',
     args: (detail?.args || []).join(' '),
@@ -40,6 +40,14 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     required: (t.inputSchema?.required || []).includes(name),
     desc: v.description || '',
   }))
+  // 表单 → mcpServers JSON 预览（与 Claude Desktop 配置同构，所填即所得）
+  const previewJson = JSON.stringify({
+    mcpServers: {
+      [form.name || 'unnamed']: form.type === 'stdio'
+        ? { command: form.command, args: form.args.trim().split(/\s+/).filter(Boolean), env: parseKV(form.env) }
+        : { url: form.url, headers: parseKV(form.headers) },
+    },
+  }, null, 2)
 
   const tools = syncedTools ?? detail?.tools ?? []
   const toolNames = tools.map((t) => t.name)
@@ -72,6 +80,17 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
 
   const submit = () => {
     if (!form.name.trim()) return warn('请填写名称')
+    // 配置落库（mcp_servers）：保存后可被后续同步/工具挂载复用
+    window.mcp?.save({
+      name: form.name.trim(),
+      type: form.type,
+      command: form.command.trim(),
+      args: form.args.trim().split(/\s+/).filter(Boolean),
+      url: form.url.trim(),
+      env: parseKV(form.env),
+      headers: parseKV(form.headers),
+      tools,
+    })
     if (transport && !form.url.trim() && !form.command.trim()) {
       return warn('请填写服务器地址或启动命令')
     }
@@ -171,6 +190,10 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
                 <textarea className="field resize-none font-mono !text-xs" rows={2} placeholder={'Authorization=Bearer ...'} value={form.headers} onChange={(e) => set({ headers: e.target.value })} />
               </Field>
             )}
+            <div>
+              <div className="mb-1.5 block-label">配置预览</div>
+              <pre className="overflow-x-auto rounded-btn bg-subtle px-3 py-2.5 font-mono text-xs leading-relaxed text-ink2">{previewJson}</pre>
+            </div>
           </>
         )}
 
@@ -257,12 +280,12 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
 
         <div className="notice">
           <CheckCircle2 size={14} />
-          保存草稿后版本号自动 +0.1，正式生效需负责人确认。
+          {notice || '保存草稿后版本号自动 +0.1，正式生效需负责人确认。'}
         </div>
 
         <div className="flex justify-end gap-2">
           <button className="btn-ghost" onClick={onCancel}>取消</button>
-          <button className="btn-primary" onClick={submit}>保存草稿</button>
+          <button className="btn-primary" onClick={submit}>{submitLabel}</button>
         </div>
       </div>
     </div>
