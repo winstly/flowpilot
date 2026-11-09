@@ -169,6 +169,8 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                       questions={n.review.questions}
                       onAnswer={(qid, opt) => {
                         taskStore.answerReview(task.id, n.id, { [qid]: opt })
+                        // 与 Run 抽屉同路径：若确认门仍在运行时挂起，这里同时放行下游
+                        window.agent?.resume?.({ nodeId: n.id, questionId: qid, answer: opt })
                         refresh()
                         ok('审查结论已记录')
                       }}

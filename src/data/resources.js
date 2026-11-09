@@ -138,13 +138,6 @@ export const resources = [
 
 export const RESOURCE_TYPES = ['Workflow', 'MCP', 'Skill']
 
-export const directories = [
-  '/团队空间/市场洞察',
-  '/团队空间/产品文档',
-  '/团队空间/设计资产',
-  '/个人空间/草稿箱',
-]
-
 export const attachmentPool = [
   { name: '竞品截图-0930.png', size: '1.2 MB' },
   { name: 'Q3 用户反馈样本.xlsx', size: '356 KB' },
@@ -163,12 +156,12 @@ export const workflowDetails = {
     summary: "聚合竞品动态，清洗分析后生成周度报告并推送。由 3 个 Agent 串联 + 1 个人工审查点。",
     agents: ["数据采集 Bot", "数据清洗 Bot", "分析 Bot", "可视化 Bot", "报告 Bot"],
     nodes: [
-      { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot", agentVersion: "v1.8", status: "done", duration: "2m 14s" },
-      { id: "n2", lane: "core", name: "竞品数据清洗", agent: "数据清洗 Bot", agentVersion: "v1.2", status: "done", duration: "1m 02s" },
-      { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot", agentVersion: "v2.3", status: "done", duration: "1m 45s" },
-      { id: "n3r", lane: "core", name: "人工审查：对比结论", agent: "用户审查", status: "pending", duration: "待审查" },
-      { id: "n4", lane: "core", name: "图表生成", agent: "可视化 Bot", agentVersion: "v1.6", status: "idle", duration: "—" },
-      { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot", agentVersion: "v1.4", status: "idle", duration: "—" }
+      { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot" },
+      { id: "n2", lane: "core", name: "竞品数据清洗", agent: "数据清洗 Bot" },
+      { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot" },
+      { id: "n3r", lane: "core", name: "人工审查：对比结论", agent: "用户审查" },
+      { id: "n4", lane: "core", name: "图表生成", agent: "可视化 Bot" },
+      { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot" }
     ],
     edges: [["n1","n2"],["n2","n3"],["n3","n3r"],["n3r","n4"],["n4","n5"]],
     // 历史版本的内容快照：切换版本时详情按此渲染
@@ -177,11 +170,11 @@ export const workflowDetails = {
         summary: "聚合竞品动态，清洗分析后生成周度报告并推送。v2.0 接入可视化 Bot 自动生成图表，尚未引入人工审查点。",
         agents: ["数据采集 Bot", "数据清洗 Bot", "分析 Bot", "可视化 Bot", "报告 Bot"],
         nodes: [
-          { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot", agentVersion: "v1.8", status: "done", duration: "2m 14s" },
-          { id: "n2", lane: "core", name: "竞品数据清洗", agent: "数据清洗 Bot", agentVersion: "v1.2", status: "done", duration: "1m 02s" },
-          { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot", agentVersion: "v2.3", status: "done", duration: "1m 45s" },
-          { id: "n4", lane: "core", name: "图表生成", agent: "可视化 Bot", agentVersion: "v1.6", status: "done", duration: "0m 50s" },
-          { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot", agentVersion: "v1.4", status: "done", duration: "1m 10s" }
+          { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot" },
+          { id: "n2", lane: "core", name: "竞品数据清洗", agent: "数据清洗 Bot" },
+          { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot" },
+          { id: "n4", lane: "core", name: "图表生成", agent: "可视化 Bot" },
+          { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot" }
         ],
         edges: [["n1","n2"],["n2","n3"],["n3","n4"],["n4","n5"]]
       },
@@ -189,9 +182,9 @@ export const workflowDetails = {
         summary: "初版流程：采集竞品动态后由分析 Bot 直接产出周报。图表生成与人工审查均为后续版本引入。",
         agents: ["数据采集 Bot", "分析 Bot", "报告 Bot"],
         nodes: [
-          { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot", agentVersion: "v1.2", status: "done", duration: "3m 05s" },
-          { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot", agentVersion: "v1.9", status: "done", duration: "2m 30s" },
-          { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot", agentVersion: "v1.0", status: "done", duration: "1m 40s" }
+          { id: "n1", lane: "input", name: "收集竞品动态", agent: "数据采集 Bot" },
+          { id: "n3", lane: "core", name: "多维度对比分析", agent: "分析 Bot" },
+          { id: "n5", lane: "output", name: "生成周报并推送", agent: "报告 Bot" }
         ],
         edges: [["n1","n3"],["n3","n5"]]
       }
@@ -201,10 +194,10 @@ export const workflowDetails = {
     summary: "对 PRD 做结构化预审，输出风险清单与建议。2 个 Agent + 1 个人工审查点。",
     agents: ["文档解析 Bot", "评审 Bot", "架构 Bot", "报告 Bot"],
     nodes: [
-      { id: "n1", lane: "input", name: "解析 PRD 文档", agent: "文档解析 Bot", agentVersion: "v1.1", status: "done", duration: "0m 48s" },
-      { id: "n2", lane: "core", name: "逻辑完整性检查", agent: "评审 Bot", agentVersion: "v1.2", status: "done", duration: "1m 37s" },
-      { id: "n3", lane: "core", name: "人工审查：技术可行性", agent: "用户审查", status: "pending", duration: "待审查" },
-      { id: "n4", lane: "output", name: "输出评审意见", agent: "报告 Bot", agentVersion: "v1.4", status: "idle", duration: "—" }
+      { id: "n1", lane: "input", name: "解析 PRD 文档", agent: "文档解析 Bot" },
+      { id: "n2", lane: "core", name: "逻辑完整性检查", agent: "评审 Bot" },
+      { id: "n3", lane: "core", name: "人工审查：技术可行性", agent: "用户审查" },
+      { id: "n4", lane: "output", name: "输出评审意见", agent: "报告 Bot" }
     ],
     edges: [["n1","n2"],["n2","n3"],["n3","n4"]]
   },
@@ -212,11 +205,11 @@ export const workflowDetails = {
     summary: "一篇源稿适配公众号/知乎/X 三平台并排期。并行分支：3 个改写节点同时执行。",
     agents: ["内容助理 Bot", "写作 Bot", "发布 Bot"],
     nodes: [
-      { id: "n1", lane: "input", name: "接收源稿", agent: "内容助理 Bot", agentVersion: "v1.3", status: "done", duration: "0m 12s" },
-      { id: "n2", lane: "core", name: "公众号版改写", agent: "写作 Bot", agentVersion: "v3.1", status: "done", duration: "1m 21s" },
-      { id: "n3", lane: "core", name: "知乎版改写", agent: "写作 Bot", agentVersion: "v3.1", status: "fail", duration: "重试 2 次" },
-      { id: "n4", lane: "core", name: "X 短文版改写", agent: "写作 Bot", agentVersion: "v3.1", status: "done", duration: "0m 44s" },
-      { id: "n5", lane: "output", name: "排期与发布", agent: "发布 Bot", agentVersion: "v1.0", status: "idle", duration: "—" }
+      { id: "n1", lane: "input", name: "接收源稿", agent: "内容助理 Bot" },
+      { id: "n2", lane: "core", name: "公众号版改写", agent: "写作 Bot" },
+      { id: "n3", lane: "core", name: "知乎版改写", agent: "写作 Bot" },
+      { id: "n4", lane: "core", name: "X 短文版改写", agent: "写作 Bot" },
+      { id: "n5", lane: "output", name: "排期与发布", agent: "发布 Bot" }
     ],
     edges: [["n1","n2"],["n1","n3"],["n1","n4"],["n2","n5"],["n3","n5"],["n4","n5"]]
   },
@@ -224,10 +217,10 @@ export const workflowDetails = {
     summary: "发布前自动核对检查单并汇总风险。并行核对：回归范围 + 配置差异同时执行。",
     agents: ["文档解析 Bot", "QA Bot", "报告 Bot"],
     nodes: [
-      { id: "n1", lane: "input", name: "读取发布单", agent: "文档解析 Bot", agentVersion: "v1.1", status: "done", duration: "0m 20s" },
-      { id: "n2", lane: "core", name: "核对回归范围", agent: "QA Bot", agentVersion: "v2.0", status: "done", duration: "1m 44s" },
-      { id: "n3", lane: "core", name: "扫描配置差异", agent: "QA Bot", agentVersion: "v2.0", status: "done", duration: "0m 39s" },
-      { id: "n4", lane: "output", name: "汇总发布风险", agent: "报告 Bot", agentVersion: "v1.4", status: "done", duration: "0m 25s" }
+      { id: "n1", lane: "input", name: "读取发布单", agent: "文档解析 Bot" },
+      { id: "n2", lane: "core", name: "核对回归范围", agent: "QA Bot" },
+      { id: "n3", lane: "core", name: "扫描配置差异", agent: "QA Bot" },
+      { id: "n4", lane: "output", name: "汇总发布风险", agent: "报告 Bot" }
     ],
     edges: [["n1","n2"],["n1","n3"],["n2","n4"],["n3","n4"]]
   }

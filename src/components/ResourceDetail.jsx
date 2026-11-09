@@ -166,7 +166,6 @@ function WorkflowView({ resource, ver, onNavigate }) {
                 <th className="px-3 py-2 font-medium">节点</th>
                 <th className="px-3 py-2 font-medium">Agent</th>
                 <th className="px-3 py-2 font-medium">状态</th>
-                <th className="px-3 py-2 font-medium">Agent 版本</th>
               </tr>
             </thead>
             <tbody>
@@ -183,7 +182,6 @@ function WorkflowView({ resource, ver, onNavigate }) {
                     </button>
                   </td>
                   <td className="px-3 py-2"><Badge node={NODE_STATUS[n.status] || NODE_STATUS.idle} /></td>
-                  <td className="px-3 py-2 text-mute">{n.agentVersion || "—"}</td>
                 </tr>
               ))}
             </tbody>

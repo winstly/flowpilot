@@ -7,6 +7,12 @@ contextBridge.exposeInMainWorld('settings', {
   test: (cfg) => ipcRenderer.invoke('settings:test', cfg),
 })
 
+contextBridge.exposeInMainWorld('records', {
+  load: (kind) => ipcRenderer.invoke('records:load', kind),
+  save: (kind, id, record) => ipcRenderer.invoke('records:save', { kind, id, record }),
+  remove: (kind, id) => ipcRenderer.invoke('records:remove', { kind, id }),
+})
+
 contextBridge.exposeInMainWorld('mcp', {
   list: () => ipcRenderer.invoke('mcp:list'),
   save: (row) => ipcRenderer.invoke('mcp:save', row),
@@ -16,8 +22,11 @@ contextBridge.exposeInMainWorld('mcp', {
 })
 
 contextBridge.exposeInMainWorld('agent', {
+  plan: (payload) => ipcRenderer.invoke('agent:plan', payload),
+  chat: (payload) => ipcRenderer.invoke('agent:chat', payload),
+  resume: (payload) => ipcRenderer.invoke('agent:resume', payload),
   start: (payload) => ipcRenderer.invoke('agent:start', payload),
-  abort: () => ipcRenderer.invoke('agent:abort'),
+  abort: (taskId) => ipcRenderer.invoke('agent:abort', taskId),
   state: () => ipcRenderer.invoke('agent:state'),
   onEvent: (cb) => {
     const listener = (_, ev) => cb(ev)
@@ -28,6 +37,8 @@ contextBridge.exposeInMainWorld('agent', {
 
 contextBridge.exposeInMainWorld('desktop', {
   platform: process.platform,
+  pickDirectory: (defaultPath) => ipcRenderer.invoke('dialog:pick-directory', defaultPath),
+  reveal: (p) => ipcRenderer.invoke('shell:reveal', p),
   minimize: () => ipcRenderer.invoke('win:minimize'),
   toggleMaximize: () => ipcRenderer.invoke('win:toggle-maximize'),
   close: () => ipcRenderer.invoke('win:close'),

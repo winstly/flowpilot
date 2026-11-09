@@ -1,10 +1,10 @@
 import { useRef } from 'react'
-import { X, SendHorizonal } from 'lucide-react'
+import { X, SendHorizonal, FolderOpen, FileText, LoaderCircle } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import { TracePanel } from './trace'
 import { nodeStatus } from './shared'
 
-export default function Drawer({ mode, node, task, refresh, chatText, setChatText, onSend, onClose }) {
+export default function Drawer({ mode, node, task, refresh, chatText, setChatText, chatPending, onSend, onClose }) {
   const bodyRef = useRef(null)
   const msgs = task.messages.slice(-8)
   return (
@@ -24,13 +24,38 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
                 <Row k="耗时" v={node.duration} />
                 <Row k="纠正次数" v={node.corrections} />
               </dl>
-              {node.output && (
+              {/* 产出：交付文件列表（标题 + 地址 + 打开目录所在位置） */}
+              {node.files?.length > 0 && (
                 <div className="mt-3">
                   <div className="mb-1 block-label">产出</div>
+                  <ul className="space-y-1.5">
+                    {node.files.map((f) => (
+                      <li key={f.path} className="flex items-center gap-2.5 rounded-btn border border-line px-3 py-2">
+                        <FileText size={14} className="flex-none text-brand" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-xs font-medium text-ink">{f.name}</div>
+                          <div className="truncate text-[11px] text-mute" title={f.path}>{f.path}</div>
+                        </div>
+                        <button
+                          className="iconbtn !size-7 flex-none"
+                          title="打开目录所在位置"
+                          aria-label={`打开 ${f.name} 所在目录`}
+                          onClick={() => window.desktop?.reveal?.(f.path)}
+                        >
+                          <FolderOpen size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {node.output && (
+                <div className="mt-3">
+                  <div className="mb-1 block-label">{node.files?.length ? '产出说明' : '产出'}</div>
                   <div className="rounded-btn bg-subtle px-3 py-2.5 text-xs leading-relaxed text-ink">{node.output}</div>
                 </div>
               )}
-              <TracePanel node={node} scrollRef={bodyRef} refresh={refresh} key={node.id} />
+              <TracePanel node={node} task={task} scrollRef={bodyRef} refresh={refresh} key={node.id} />
             </div>
           </>
         )}
@@ -65,15 +90,33 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
                 </div>
               ))}
             </div>
+            {/* 主 Agent 应答中 */}
+            {chatPending && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-2 rounded-panel bg-mute-soft px-3.5 py-2.5 text-sm text-mute">
+                  <LoaderCircle size={13} className="animate-spin" />
+                  主 Agent 思考中…
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 border-t border-line px-4 py-3.5">
               <input
                 className="field"
                 placeholder="输入纠正意见，回车发送…"
                 value={chatText}
+                disabled={chatPending}
                 onChange={(e) => setChatText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && onSend()}
+                onKeyDown={(e) => {
+                  if (e.nativeEvent.isComposing) return // 中文输入法选词回车不发送（同 TagInput）
+                  if (e.key === 'Enter') onSend()
+                }}
               />
-              <button className="iconbtn !bg-primary !text-white hover:!bg-primary-hover" onClick={onSend} aria-label="发送">
+              <button
+                className="iconbtn !bg-primary !text-white hover:!bg-primary-hover disabled:opacity-50"
+                onClick={onSend}
+                disabled={chatPending}
+                aria-label="发送"
+              >
                 <SendHorizonal size={15} />
               </button>
             </div>

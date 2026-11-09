@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Check, X, FileText } from 'lucide-react'
 import { workflows } from '@/data/workflows'
 import { agents } from '@/data/agents'
-import { resources, directories, attachmentPool } from '@/data/resources'
+import { resources, attachmentPool } from '@/data/resources'
 
 // 资源选择：原生 <dialog>（搜索 + 分类 chips + 单/复选）
+// 存储目录不在此列——走系统文件夹选择框（见 TasksPage pickDir）
 const CONF = {
   workflow: { title: '选择 Workflow', multi: false },
   agent:    { title: '选择 Agent（可多选）', multi: true },
   skill:    { title: '选择 Skill（可多选）', multi: true },
-  dir:      { title: '选择存储目录', multi: false },
   attach:   { title: '添加附件（仅元数据）', multi: true },
 }
 
@@ -17,7 +17,6 @@ function poolOf(type) {
   if (type === 'workflow') return workflows.map((w) => ({ id: w.id, name: w.name, cat: w.category, meta: `${w.nodes.length} 节点` }))
   if (type === 'agent') return agents.map((a) => ({ id: a.id, name: a.name, cat: a.category, meta: `${a.version} ${a.desc.slice(0, 18)}…` }))
   if (type === 'skill') return resources.filter((r) => r.kind === 'Skill').map((r) => ({ id: r.id, name: r.name, cat: '通用能力', meta: `${r.version} ${r.desc.slice(0, 18)}…` }))
-  if (type === 'dir') return directories.map((d) => ({ id: d, name: d, cat: '目录', meta: '团队/个人空间' }))
   return attachmentPool.map((f) => ({ id: f.name, name: f.name, cat: '文件', meta: f.size }))
 }
 

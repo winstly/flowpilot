@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ok, warn, fail, info } from '@/lib/toast'
 import { Dialog, Select } from 'radix-ui'
 import {
@@ -6,12 +6,28 @@ import {
 } from 'lucide-react'
 import { PageHeader, TelemetryLine } from '@/components/ui'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { seedInsights, INSIGHT_CATEGORIES } from '@/data/insights'
+import { INSIGHT_CATEGORIES } from '@/data/insights'
+import { records } from '@/lib/records'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
 export default function InsightsPage() {
-  const [list, setList] = useState(seedInsights)
+  const [list, setListState] = useState([])
+  const setList = (next) => setListState(next)
+  // 沉淀条目整体落 SQLite（单条记录）：水合完成后的每次变更即存
+  //（副作用放 effect 而不是 setState updater：updater 纯函数，StrictMode 下会被重复执行）
+  const skipPersist = useRef(true)
+  useEffect(() => {
+    if (skipPersist.current) return
+    records.save('insight', 'all', { items: list }).catch(() => {})
+  }, [list])
+  useEffect(() => {
+    records.load('insight').then((rows) => {
+      const row = (rows || []).find((r) => Array.isArray(r?.items))
+      if (row) setListState(row.items)
+    }).catch(() => {})
+      .finally(() => { skipPersist.current = false })
+  }, [])
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ title: '', category: '', body: '' })
@@ -148,7 +164,9 @@ export default function InsightsPage() {
             </article>
           ))}
           {filtered.length === 0 && (
-            <div className="py-14 text-center text-sm text-mute">没有匹配的方法论</div>
+            <div className="py-14 text-center text-sm text-mute">
+              {list.length ? '没有匹配的方法论' : '还没有沉淀的方法论，完成任务复盘后可一键沉淀'}
+            </div>
           )}
         </div>
       </section>

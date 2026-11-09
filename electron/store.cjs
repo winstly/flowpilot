@@ -50,8 +50,32 @@ function init(userDataDir) {
       created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     ) STRICT;
+    CREATE TABLE IF NOT EXISTS app_records (
+      kind TEXT NOT NULL,
+      id TEXT NOT NULL,
+      record TEXT NOT NULL CHECK (json_valid(record)),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+      PRIMARY KEY (kind, id)
+    ) STRICT;
   `)
 }
+
+// 通用记录存取（信封模式：kind + id → record JSON）——任务 / 知识库 / 市场发布共用
+// 单条损坏只跳过该条，不拖垮整个水合
+const listRecords = (kind) =>
+  db.prepare('SELECT id, record FROM app_records WHERE kind = ? ORDER BY updated_at DESC').all(kind)
+    .map((r) => { try { return JSON.parse(r.record) } catch { return null } })
+    .filter(Boolean)
+
+function saveRecord(kind, id, record) {
+  db.prepare(`
+    INSERT INTO app_records (kind, id, record, updated_at) VALUES (?, ?, ?, datetime('now','localtime'))
+    ON CONFLICT(kind, id) DO UPDATE SET record = excluded.record, updated_at = excluded.updated_at
+  `).run(kind, String(id), JSON.stringify(record ?? {}))
+}
+
+const removeRecord = (kind, id) =>
+  db.prepare('DELETE FROM app_records WHERE kind = ? AND id = ?').run(kind, String(id))
 
 function get() {
   const row = db.prepare('SELECT * FROM app_config WHERE id = 1').get()
@@ -116,4 +140,4 @@ const removeMcpServer = (id) => db.prepare('DELETE FROM mcp_servers WHERE id = ?
 const updateMcpTools = (id, tools) =>
   db.prepare(`UPDATE mcp_servers SET tools = ?, updated_at = datetime('now','localtime') WHERE id = ?`).run(JSON.stringify(tools || []), id)
 
-module.exports = { init, get, save, createSession, setSessionStatus, addEntry, listEntries, listMcpServers, getMcpServer, saveMcpServer, removeMcpServer, updateMcpTools }
+module.exports = { init, get, save, createSession, setSessionStatus, addEntry, listEntries, listRecords, saveRecord, removeRecord, listMcpServers, getMcpServer, saveMcpServer, removeMcpServer, updateMcpTools }

@@ -19,32 +19,21 @@ const EV_META = {
 }
 const traceOf = (node) => {
   const base = node.events || (node.log || []).map((line) => ({ t: 'text', text: line }))
-  // 审查节点：把报告和问题转为标准事件融入时间线
-  if (node.type === 'review' && node.review) {
-    const extra = []
-    if (node.review.report) extra.push({ t: 'text', text: node.review.report })
+  // 审查节点：gate 真到达（产出就绪）后才呈现确认问题；定义期问题不亮灯
+  // 确认清单正文在抽屉「产出」块显示（node.output / node.review.report），时间线只留确认卡，不重复渲染
+  const gateReached = node?.status === 'review' || !!node?.review?.report
+  if (node?.type === 'review' && node.review && gateReached) {
     if (node.review.questions?.length) {
-      extra.push({ t: 'ask', text: '待用户确认', questions: node.review.questions })
+      return [...base, { t: 'ask', text: '待用户确认', questions: node.review.questions }]
     }
-    return [...base, ...extra]
   }
   return base
 }
 
-// 运行中节点：事件逐条流式显现（~850ms/条），其余节点全量
+// 执行记录定位：已发生的条目直接呈现（不回放），抽屉打开后新到的条目才做流式显现
 function useTraceStream(node) {
-  const total = traceOf(node).length
-  const running = node?.status === 'running'
-  const [revealed, setRevealed] = useState(running ? Math.min(1, total) : total)
-  useEffect(() => {
-    setRevealed(running ? Math.min(1, total) : total)
-  }, [node?.id, total, running])
-  useEffect(() => {
-    if (!running || revealed >= total) return
-    const t = setTimeout(() => setRevealed((r) => Math.min(r + 1, total)), 850)
-    return () => clearTimeout(t)
-  }, [revealed, running, total])
-  return { shown: traceOf(node).slice(0, revealed), streaming: running && revealed < total }
+  const [baseline] = useState(() => traceOf(node).length)
+  return { shown: traceOf(node), streaming: node?.status === 'running', baseline }
 }
 
 const PAGE_SIZE = 10
@@ -72,20 +61,22 @@ function TypewriterText({ text, active }) {
   )
 }
 
-export function TracePanel({ node, scrollRef, refresh }) {
-  const { shown, streaming } = useTraceStream(node)
+export function TracePanel({ node, task, scrollRef, refresh }) {
+  const { shown, streaming, baseline } = useTraceStream(node)
   const [open, setOpen] = useState(() => new Set())
   const [follow, setFollow] = useState(true)
   const total = shown.length
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const [page, setPage] = useState(totalPages) // 默认停在最后一页（最新事件）
 
-  // 流式新增事件时自动翻到最后一页
+  // 新事件到达且处于跟随时，翻到最后一页（定位最新执行点）
   useEffect(() => {
-    if (streaming) setPage(Math.max(1, Math.ceil(shown.length / PAGE_SIZE)))
-  }, [shown.length, streaming])
+    if (streaming && follow) setPage(Math.max(1, Math.ceil(shown.length / PAGE_SIZE)))
+  }, [shown.length, streaming, follow])
 
-  const pageStart = (page - 1) * PAGE_SIZE
+  // 事件变少（如节点重跑清空记录）时钳住页码，避免停在越界页显示空白
+  const pageClamped = Math.min(page, totalPages)
+  const pageStart = (pageClamped - 1) * PAGE_SIZE
   const recent = shown.slice(pageStart, pageStart + PAGE_SIZE)
 
   // 未回答的 ask 事件默认展开（可手动收起）
@@ -151,10 +142,10 @@ export function TracePanel({ node, scrollRef, refresh }) {
             >
               ‹
             </button>
-            <span className="px-1 text-xs tabular-nums text-ink2">{page} / {totalPages}</span>
+            <span className="px-1 text-xs tabular-nums text-ink2">{pageClamped} / {totalPages}</span>
             <button
               className="flex size-5 items-center justify-center rounded-sm text-mute transition-colors hover:bg-mute-soft hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
-              disabled={page >= totalPages}
+              disabled={pageClamped >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               aria-label="下一页"
             >
@@ -171,7 +162,7 @@ export function TracePanel({ node, scrollRef, refresh }) {
         {recent.map((e, i) => {
           const idx = pageStart + i
           const isLast = i === recent.length - 1
-          const isStreamingLast = streaming && isLast
+          const isStreamingLast = streaming && isLast && idx >= baseline // 只流式显现新到条目
           const meta = EV_META[e.t] || EV_META.text
           const isAsk = e.t === 'ask'
           const bodyOpen = open.has(idx) || isStreamingLast
@@ -195,10 +186,10 @@ export function TracePanel({ node, scrollRef, refresh }) {
                   onClick={() => toggle(idx)}
                 >
                   <span className={`inline-flex flex-none items-center rounded-sm px-1.5 py-0.5 text-xs font-semibold ${meta.bg} ${meta.color}`}>
-                    {meta.label}
+                    {e.kind === 'FS' ? '文件' : meta.label}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-xs font-medium leading-[1.45] text-ink">
-                    {meta.title}
+                    {e.kind === 'FS' ? `工具调用 ${e.name}` : meta.title}
                     {isStreamingLast && <span className="animate-pulse text-brand">▍</span>}
                   </span>
                   {e.ms && <span className="flex-none text-xs tabular-nums text-mute">{e.ms}</span>}
@@ -214,8 +205,9 @@ export function TracePanel({ node, scrollRef, refresh }) {
                         questions={e.questions}
                         onAnswer={(qid, opt) => {
                           if (node.type === 'review') {
-                            // 审查节点：走 store 的 answerReview
-                            taskStore.answerReview(task.id, node.id, { [qid]: opt })
+                            // 审查节点：UI 状态 + 运行时确认门放行（下游在此之后才启动）
+                            taskStore.answerReview(task?.id, node.id, { [qid]: opt })
+                            window.agent?.resume?.({ nodeId: node.id, questionId: qid, answer: opt })
                           } else {
                             // 内嵌 ask：直接更新事件数据
                             e.questions = e.questions.map((q) =>

@@ -18,7 +18,6 @@ export default function TopBar() {
         <ChevronRight size={13} className="hidden text-mute sm:inline" />
         <span className="font-medium text-ink">{crumbs[1]}</span>
       </nav>
-      <span className="chip chip-accent ml-1 flex-none !py-[3px] !text-xs">预览数据</span>
       <div className="flex-1" />
       <button className="iconbtn" aria-label="帮助" title="帮助">
         <CircleHelp size={17} strokeWidth={1.9} />

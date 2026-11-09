@@ -1,5 +1,5 @@
 // FlowPilot 桌面壳：无原生标题栏 / 无原生菜单工具栏，渲染层为现有 Vite + React
-const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain, shell, Menu, dialog } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 const store = require('./store.cjs')
@@ -100,6 +100,24 @@ function createWindow() {
 ipcMain.handle('settings:get', () => store.get())
 ipcMain.handle('settings:save', (_, row) => store.save(row))
 ipcMain.handle('settings:delete', (_, id) => store.remove(id))
+// 应用数据持久化：任务 / 知识库 / 市场发布（app_records 信封表）
+ipcMain.handle('records:load', (_, kind) => store.listRecords(kind))
+ipcMain.handle('records:save', (_, { kind, id, record }) => { store.saveRecord(kind, id, record); return true })
+ipcMain.handle('records:remove', (_, { kind, id }) => { store.removeRecord(kind, id); return true })
+
+// 存储目录选择：系统文件夹选择框（任务工作目录 = 本地工程目录）
+// 验收钩子：PICK_DIR_AUTO=<path> 时跳过对话框直接返回（配 SNAPSHOT 流程用）
+ipcMain.handle('dialog:pick-directory', async (event, defaultPath) => {
+  if (process.env.PICK_DIR_AUTO) return process.env.PICK_DIR_AUTO
+  const base = typeof defaultPath === 'string' && defaultPath && fs.existsSync(defaultPath) ? defaultPath : process.cwd()
+  const win = BrowserWindow.fromWebContents(event.sender)
+  const r = await dialog.showOpenDialog(win, {
+    title: '选择存储目录',
+    defaultPath: base,
+    properties: ['openDirectory'],
+  })
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0]
+})
 // 连接测试：多路径 + 多鉴权方式探测，不落库；404 时用 1-token 模型调用兜底
 // 模型槽位顺序与展示名（与配置弹窗 MODEL_SLOTS 对应）
 const SLOT_ORDER = [
@@ -303,12 +321,21 @@ ipcMain.handle('mcp:call', async (_, { name, tool, args }) => {
   try { return { ok: true, result: await mcpManager.callTool(name, tool, args) } }
   catch (e) { return { ok: false, message: String(e?.message || e).slice(0, 200) } }
 })
+ipcMain.handle('agent:plan', (_, payload) => agentHost.plan(payload))
+ipcMain.handle('agent:chat', (_, payload) => agentHost.chat(payload))
+ipcMain.handle('agent:resume', (_, payload) => agentHost.resume(payload))
+// 产出物定位：在系统文件管理器中显示文件（打开目录所在位置）
+ipcMain.handle('shell:reveal', (_, p) => {
+  if (typeof p !== 'string' || !p) return { ok: false }
+  shell.showItemInFolder(p)
+  return { ok: true }
+})
 ipcMain.handle('agent:start', (_, payload) => {
-  const r = agentHost.start(payload)
+  const r = agentHost.start({ baseDir: path.join(app.getPath('documents'), 'FlowPilot'), ...payload })
   // done 只给 headless 用；渲染层靠事件流
   return r.ok ? { ok: true, runId: r.runId, sessionId: r.sessionId } : r
 })
-ipcMain.handle('agent:abort', () => agentHost.abort())
+ipcMain.handle('agent:abort', (_, taskId) => agentHost.abort(taskId ?? null))
 ipcMain.handle('agent:state', () => agentHost.state())
 
 app.whenReady().then(() => {

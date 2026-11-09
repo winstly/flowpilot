@@ -1,9 +1,9 @@
-import { useState, useReducer } from 'react'
+import { useState, useEffect, useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ok, warn, fail, info } from '@/lib/toast'
 import {
   Workflow, Bot, Puzzle, FolderOpen, Paperclip, X, TriangleAlert,
-  Clock, GitFork, MessageSquareWarning, SendHorizonal, Trash2, Share,
+  Clock, GitFork, MessageSquareWarning, SendHorizonal, Trash2, Share, RotateCcw,
 } from 'lucide-react'
 import { PageHeader, Badge } from '@/components/ui'
 import ResourceDialog from '@/components/ResourceDialog'
@@ -17,10 +17,10 @@ import { agents } from '@/data/agents'
 import { resources } from '@/data/resources'
 
 const CFG_BUTTONS = [
-  { type: 'workflow', icon: Workflow, label: '绑定 Workflow（单选）' },
+  { type: 'workflow', icon: Workflow, label: '绑定 Workflow（可选，单选）' },
   { type: 'agent', icon: Bot, label: '配置 Agent（可多选）' },
   { type: 'skill', icon: Puzzle, label: '配置 Skill（可多选）' },
-  { type: 'dir', icon: FolderOpen, label: '选择存储目录' },
+  { type: 'dir', icon: FolderOpen, label: '选择存储目录（本地目录）' },
   { type: 'attach', icon: Paperclip, label: '添加附件（仅元数据）' },
 ]
 
@@ -32,9 +32,23 @@ const nameOf = {
   attach: (id) => id,
 }
 
+// updatedAt 兼容：新数据是时间戳（相对展示），旧数据是字符串原样显示
+const relTime = (v) => {
+  if (typeof v !== 'number') return v || '—'
+  const s = Math.max(0, (Date.now() - v) / 1000)
+  if (s < 60) return '刚刚'
+  if (s < 3600) return `${Math.floor(s / 60)} 分钟前`
+  if (s < 86400) return `${Math.floor(s / 3600)} 小时前`
+  return `${Math.floor(s / 86400)} 天前`
+}
+
 export default function TasksPage() {
   const navigate = useNavigate()
+  const [, force] = useReducer((x) => x + 1, 0)
   const [text, setText] = useState('')
+
+  // SQLite 水合完成后补渲染（启动即挂载的页面必须订阅）
+  useEffect(() => taskStore.subscribe(force), [])
   const [sel, setSel] = useState({ workflow: '', agents: [], skills: [], dir: '', attachments: [] })
   const [dlgType, setDlgType] = useState(null)
   const [pubTask, setPubTask] = useState(null) // 结束且被选中申请发布的任务
@@ -53,11 +67,18 @@ export default function TasksPage() {
   const removeChip = (key, id) =>
     setSel((s) => ({ ...s, [key]: s[key].filter((x) => x !== id) }))
 
+  // 存储目录：唤起系统文件夹选择框，选本地工程目录（非演示清单）
+  const pickDir = async () => {
+    if (!window.desktop?.pickDirectory) return warn('桌面桥未就绪')
+    const dir = await window.desktop.pickDirectory(sel.dir)
+    if (dir) setSel((s) => ({ ...s, dir }))
+  }
+
   const create = () => {
     if (!text.trim()) return warn('请先描述你要完成的任务')
-    if (!sel.workflow) return warn('请先绑定一个 Workflow')
     const t = taskStore.add({
       title: text.trim().slice(0, 60),
+      goal: text.trim(),
       workflowId: sel.workflow,
       agents: sel.agents,
       skills: sel.skills,
@@ -67,6 +88,8 @@ export default function TasksPage() {
     setText('')
     setSel({ workflow: '', agents: [], skills: [], dir: '', attachments: [] })
     ok(`任务 ${t.id} 已创建`)
+    // 创建即上画布并自动执行（编排/执行同一链路），不等手动点「开始执行」
+    navigate(`/tasks/${t.id}/run`, { state: { autoRun: true } })
   }
 
   return (
@@ -85,7 +108,13 @@ export default function TasksPage() {
         />
         <div className="mt-3 flex items-center gap-1.5">
           {CFG_BUTTONS.map(({ type, icon: Icon, label }) => (
-            <button key={type} className="iconbtn" title={label} aria-label={label} onClick={() => setDlgType(type)}>
+            <button
+              key={type}
+              className="iconbtn"
+              title={label}
+              aria-label={label}
+              onClick={() => (type === 'dir' ? pickDir() : setDlgType(type))}
+            >
               <Icon size={17} strokeWidth={1.8} />
             </button>
           ))}
@@ -111,7 +140,8 @@ export default function TasksPage() {
             ))}
             {sel.dir && (
               <span className="chip chip-neutral">
-                <FolderOpen size={12} />{sel.dir}
+                <FolderOpen size={12} />
+                <span className="max-w-[320px] truncate" title={sel.dir}>{sel.dir}</span>
                 <button onClick={() => setSel((s) => ({ ...s, dir: '' }))} aria-label="移除目录" className="ml-0.5 opacity-60 hover:opacity-100">
                   <X size={11.5} strokeWidth={2.5} />
                 </button>
@@ -130,7 +160,8 @@ export default function TasksPage() {
 
         <div className="notice mt-3.5">
           <TriangleAlert size={14} />
-          演示原型：绑定关系仅写入本页内存，刷新即还原；附件不实际上传。
+          Workflow 非必选：不绑定时，执行阶段由 Agent 从资源市场自动挑选或现场编排。
+          任务与绑定已持久化到本地 SQLite，刷新不丢；附件不实际上传。
         </div>
       </div>
 
@@ -142,6 +173,7 @@ export default function TasksPage() {
           tasks={finished}
           onOpen={(id) => navigate(`/tasks/${id}/run`)}
           onPublish={(t) => setPubTask(t)}
+          onRerun={(id) => navigate(`/tasks/${id}/run`, { state: { autoRun: true } })}
         />
       </div>
 
@@ -159,14 +191,12 @@ export default function TasksPage() {
           dlgType === 'workflow' ? (sel.workflow ? [sel.workflow] : [])
           : dlgType === 'agent' ? sel.agents
           : dlgType === 'skill' ? sel.skills
-          : dlgType === 'dir' ? (sel.dir ? [sel.dir] : [])
           : sel.attachments
         }
         onClose={() => setDlgType(null)}
         onConfirm={(type, picked) => {
           setDlgType(null)
           if (type === 'workflow') setSel((s) => ({ ...s, workflow: picked[0] || '' }))
-          else if (type === 'dir') setSel((s) => ({ ...s, dir: picked[0] || '' }))
           else if (type === 'attach') setSel((s) => ({ ...s, attachments: picked }))
           else setSel((s) => ({ ...s, [type === 'agent' ? 'agents' : 'skills']: picked }))
         }}
@@ -175,7 +205,7 @@ export default function TasksPage() {
   )
 }
 
-function TaskList({ title, tasks, onOpen, onPublish }) {
+function TaskList({ title, tasks, onOpen, onPublish, onRerun }) {
   const [, force] = useReducer((x) => x + 1, 0)
   const [confirmDel, setConfirmDel] = useState(null)
 
@@ -207,8 +237,8 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
                 <span className="truncate text-sm font-medium text-ink">{t.title}</span>
               </div>
               <div className="meta-line mt-1.5">
-                <span><Clock size={12} />{t.updatedAt}</span>
-                <span><GitFork size={12} />{t.board.length} 节点</span>
+                <span><Clock size={12} />{relTime(t.updatedAt)}</span>
+                <span><GitFork size={12} />{t.board.length ? `${t.board.length} 节点` : '待 Agent 编排'}</span>
                 <span className={t.corrections ? 'text-amber' : ''}>
                   <MessageSquareWarning size={12} />
                   {t.corrections} 纠正
@@ -216,6 +246,17 @@ function TaskList({ title, tasks, onOpen, onPublish }) {
               </div>
             </div>
             <Badge node={TASK_STATUS[t.status]} />
+            {/* 失败任务 → 一键重新执行（成功节点复用，失败节点重跑） */}
+            {t.status === 'fail' && onRerun && (
+              <button
+                className="btn-outline !py-1.5 !px-2.5 flex-none !text-xs"
+                title="重新执行任务（成功节点复用，失败节点重跑）"
+                onClick={(e) => { e.stopPropagation(); onRerun(t.id) }}
+              >
+                <RotateCcw size={12} />
+                重新执行
+              </button>
+            )}
             {/* 任务成功结束 → 提供发布到团队的入口 */}
             {t.status === 'done' && onPublish && (
               <button

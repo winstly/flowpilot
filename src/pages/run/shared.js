@@ -1,8 +1,8 @@
 import { NODE_STATUS } from '@/data/tasks'
 
-// 审查点节点状态展示：未答完 → 待审查（琥珀），答完 → 成功
+// 审查点节点状态展示：gate 真到达（status='review'）才显示待审查；定义期按普通节点状态
 export const nodeStatus = (n) =>
-  n.type === 'review' && n.status !== 'done' ? NODE_STATUS.review : NODE_STATUS[n.status]
+  n.type === 'review' && n.status === 'review' ? NODE_STATUS.review : NODE_STATUS[n.status]
 
 // 主 Agent 对节点执行结果的评分：结合执行信号推导（纠正/失败扣分）；
 // 打回重跑的节点由主 Agent 复评后显式写入 agentScore。未执行 / 运行中 / 审查未闭环 → 未评估
