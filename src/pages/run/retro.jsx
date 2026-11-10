@@ -3,6 +3,7 @@ import { ok, warn, fail, info } from '@/lib/toast'
 import { X, MessageSquareWarning, UserCheck, ClipboardCopy, FileText, Star } from 'lucide-react'
 import { Stars, tabItemCls } from '@/components/ui'
 import AskUserQuestion from '@/components/AskUserQuestion'
+import MarkdownLite from '@/components/MarkdownLite'
 import { taskStore } from '@/store/taskStore'
 import { TASK_STATUS } from '@/data/tasks'
 import { nodeScoreOf, nodeStatus } from './shared'
@@ -164,7 +165,9 @@ export default function RetroReport({ task, doneCount, weakNode, refresh, onClos
                       <UserCheck size={13} className="text-warn" />
                       {n.name}
                     </div>
-                    <p className="mb-2.5 text-xs leading-relaxed text-ink2">{n.review.report}</p>
+                    <div className="mb-2.5 text-xs leading-relaxed text-ink2">
+                      <MarkdownLite content={n.review.report} />
+                    </div>
                     <AskUserQuestion
                       questions={n.review.questions}
                       onAnswer={(qid, opt) => {

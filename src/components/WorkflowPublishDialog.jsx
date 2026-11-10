@@ -6,8 +6,8 @@ import TagInput from './TagInput'
 
 // Workflow 发布申请：AI 依任务执行结果生成名称、说明、标签，用户微调后提交
 // 入口在任务结束后（任务卡 / 运行页）
-// props: open, onOpenChange, onPublish(draft), draft?={name, desc}（来源上下文预填）
-export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, draft }) {
+// props: open, onOpenChange, onPublish(draft), draft?={name, desc}（来源上下文预填）, agents?（同步发布的节点 Agent 名）
+export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, draft, agents = [] }) {
   const [pub, setPub] = useState({ name: '', desc: '', tags: [] })
 
   useEffect(() => {
@@ -72,6 +72,20 @@ export default function WorkflowPublishDialog({ open, onOpenChange, onPublish, d
                 suggestions={['周报', '竞品', '内容', '自动化', '数据']}
               />
             </div>
+            {/* 发布联动：Workflow 里的节点 Agent 一并提交发布申请 */}
+            {agents.length > 0 && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-ink">同步发布的节点 Agent</label>
+                <div className="rounded-btn bg-subtle px-3.5 py-2.5">
+                  {agents.map((a) => (
+                    <span key={a} className="chip chip-accent mr-1.5 mb-1.5 inline-flex">{a}</span>
+                  ))}
+                  <p className="mt-1 text-xs leading-relaxed text-mute">
+                    以上 Agent 将随 Workflow 一并提交发布申请（同名已在市场的不重复发布）。
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="notice">
               <CheckCircle2 size={14} />
               提交后进入「待发布」状态，由团队负责人审批后生效。

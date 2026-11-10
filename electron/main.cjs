@@ -7,7 +7,18 @@ const AgentHost = require('./agent-host.cjs')
 const McpManager = require('./mcp.cjs')
 
 app.setName('FlowPilot')
-Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
+if (process.platform === 'darwin') {
+  // macOS 必须有菜单才带编辑角色，否则 Cmd+A/C/V 失灵；仅保留极简「编辑」菜单
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { label: app.name, submenu: [{ role: 'hide' }, { role: 'quit' }] },
+    { label: '编辑', submenu: [
+      { role: 'undo' }, { role: 'redo' }, { type: 'separator' },
+      { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' },
+    ] },
+  ]))
+} else {
+  Menu.setApplicationMenu(null) // 不要原生工具栏（Alt 也不唤出）
+}
 
 const isDev = process.argv.includes('--dev')
 

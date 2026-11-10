@@ -18,7 +18,11 @@ async function waitUntil(fn, timeoutMs) {
 
 // 临时库目录（含真实凭据副本）：结束/失败都要清掉，不留在 %TEMP%
 let tmpDir = null
-const cleanup = () => { if (tmpDir) { fs.rmSync(tmpDir, { recursive: true, force: true }); tmpDir = null } }
+const cleanup = () => {
+  if (!tmpDir) return
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { console.log("CLEANUP SKIP（句柄占用）:", tmpDir) }
+  tmpDir = null
+}
 
 async function main() {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowpilot-gate-smoke-'))

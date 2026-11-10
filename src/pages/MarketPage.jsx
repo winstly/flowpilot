@@ -4,7 +4,7 @@ import { ok, warn, fail, info } from '@/lib/toast'
 import { Dialog } from 'radix-ui'
 import {
   Search, Heart, Eye, Plus, CheckCircle2, X,
-  Pencil, Power, RefreshCw, PencilLine, Eye as EyeIcon,
+  Pencil, Power, RefreshCw, PencilLine, Eye as EyeIcon, Trash2,
 } from 'lucide-react'
 import { PageHeader, TelemetryLine, Stars, statusBadgeCls } from '@/components/ui'
 import ResourceDetail from '@/components/ResourceDetail'
@@ -17,7 +17,7 @@ import MarkdownLite from '@/components/MarkdownLite'
 import Segmented from '@/components/Segmented'
 import { RESOURCE_TYPES, mcpDetails, ruleDetails, skillDetails } from '@/data/resources'
 import { agents as agentSeed } from '@/data/agents'
-import { getMarketList, setMarketList } from '@/store/marketStore'
+import { getMarketList, setMarketList, getPublishedAgents, isAgentRemoved } from '@/store/marketStore'
 
 const TABS = [...RESOURCE_TYPES, 'Rule', 'Agent']
 
@@ -56,7 +56,8 @@ function MarketShell({ tab, setTab }) {
     setMarketList(next)
     return next
   })
-  const [agentList, setAgentList] = useState(agentSeed)
+  // Agent 标签页 = 内置 agentSeed + 随 Workflow 同步发布的节点 Agent（marketStore 持久化；已删的内置 Agent 不复活）
+  const [agentList, setAgentList] = useState(() => [...agentSeed.filter((a) => !isAgentRemoved(a.id)), ...getPublishedAgents()])
   const [favs, setFavs] = useState(() => new Set(['wf-content']))
   const [q, setQ] = useState('')
   const [detailRes, setDetailRes] = useState(null)
@@ -313,8 +314,8 @@ function MarketShell({ tab, setTab }) {
                   <Heart size={14} className={favs.has(r.id) ? 'fill-brand' : ''} />
                   {favs.has(r.id) ? '已收藏' : '收藏'}
                 </button>
-                {/* 操作层级：查看=描边入口，编辑=幽灵，审批=中立描边（不诱导），下线=页内危险幽灵 */}
-                <div className="flex items-center gap-1.5">
+                {/* 操作层级：查看=描边入口，编辑=幽灵，审批=中立描边（不诱导），下线=页内危险幽灵，删除=仅自己的资源 */}
+                <div className="flex flex-wrap items-center justify-end gap-1.5 [&_button]:whitespace-nowrap">
                   <button className="btn-ghost !px-2.5 !text-xs" onClick={() => openEdit(r)}>
                     <Pencil size={13} />编辑
                   </button>
@@ -350,6 +351,16 @@ function MarketShell({ tab, setTab }) {
                   <button className="btn-outline !py-1.5 !px-2.5 !text-xs" onClick={() => setDetailRes(r)}>
                     <Eye size={13} />查看
                   </button>
+                  {/* 属于自己的资源（作者=当前用户）才允许删除；团队内置资源只可下线 */}
+                  {r.author === '檀小猊' && (
+                    <button
+                      className="btn-danger-ghost !px-2.5 !text-xs"
+                      aria-label={`删除 ${r.name}`}
+                      onClick={() => setConfirmDel(r)}
+                    >
+                      <Trash2 size={13} />删除
+                    </button>
+                  )}
                 </div>
               </div>
             </article>

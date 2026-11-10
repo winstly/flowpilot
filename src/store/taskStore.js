@@ -215,6 +215,7 @@ export const taskStore = {
 
 // —— 事件→状态全局同步：挂在数据层（不随页面卸载断链），页面只留 UI 动作 ——
 function applyAgentEvent(ev) {
+  if (ev?.type === 'chat_delta') return // 主 Agent 流式增量只进打字泡，不改任务状态/不落库
   const t = ev?.taskId ? taskStore.get(ev.taskId) : null
   if (!t) return
   if (ev.type === 'run_start') {
@@ -257,9 +258,14 @@ function applyAgentEvent(ev) {
   } else if (ev.type === 'node_trace') {
     const n = t.board.find((x) => x.id === ev.nodeId)
     if (n && !n.detached) n.events = [...(n.events || []), ev.item]
+  } else if (ev.type === 'node_live') {
+    // 实时生成流（think/text 逐字上屏）：只存内存态，不进执行记录、不落库
+    const n = t.board.find((x) => x.id === ev.nodeId)
+    if (n && !n.detached) n.live = ev.kind === 'clear' ? null : { kind: ev.kind, partial: ev.partial }
   } else if (ev.type === 'node_end') {
     const n = t.board.find((x) => x.id === ev.nodeId)
     if (n && !n.detached) {
+      n.live = null // 权威 trace 收口，实时流退场
       if (ev.reused) {
         n.status = 'done' // 复用节点：保留既有产出/执行记录
         n.duration = n.duration || '复用'
@@ -278,8 +284,8 @@ function applyAgentEvent(ev) {
     })
     return // update 内部已落库 + 广播
   }
-  // node_trace 只增量补执行记录，权威全量在 node_end——不必每条都落库
-  if (ev.type !== 'node_trace') persist(t.id)
+  // node_trace / node_live 只增量补执行记录与实时流，权威全量在 node_end——不必每条都落库
+  if (ev.type !== 'node_trace' && ev.type !== 'node_live') persist(t.id)
   notify()
 }
 

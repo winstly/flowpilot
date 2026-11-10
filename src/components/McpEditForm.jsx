@@ -30,8 +30,15 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
     credentials: detail?.credentials || '',
   }))
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
+  // 值里可能含 '='（base64 / URL / Bearer token）：只按第一个 '=' 切，后面的都属于值
   const parseKV = (text) => Object.fromEntries(
-    text.split('\n').map((l) => l.split('=')).filter((p) => p[0]?.trim()),
+    String(text || '')
+      .split('\n')
+      .map((l) => {
+        const i = l.indexOf('=')
+        return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1)] : null
+      })
+      .filter((p) => p && p[0]),
   )
   // 真工具形状 {name, description, inputSchema} → 参数行；演示形状 {name, desc, params[]} 原样兼容
   const paramsOf = (t) => t.params || Object.entries(t.inputSchema?.properties || {}).map(([name, v]) => ({
@@ -48,6 +55,49 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
         : { url: form.url, headers: parseKV(form.headers) },
     },
   }, null, 2)
+  // JSON 直配：null = 跟随表单生成；用户编辑后持有文本，「解析并反填」回填表单
+  const [jsonText, setJsonText] = useState(null)
+
+  // 粘贴的 mcpServers / 单服务器 / 裸对象 JSON → 反填表单字段（名称/传输/命令/参数/环境变量/地址/请求头）
+  const applyJson = () => {
+    let raw
+    try { raw = JSON.parse(jsonText ?? previewJson) } catch (e) { return warn(`JSON 解析失败：${e.message}`) }
+    if (!raw || typeof raw !== 'object') return warn('JSON 顶层必须是对象')
+    let name = form.name
+    let cfg = raw
+    if (raw.mcpServers && typeof raw.mcpServers === 'object') {
+      const entries = Object.entries(raw.mcpServers)
+      if (!entries.length) return warn('mcpServers 里没有服务器条目')
+      const hit = entries.find(([k]) => k === form.name) || entries[0]
+      name = hit[0]
+      cfg = hit[1]
+    } else {
+      // {"名称": {command/url...}} 单条目写法也认
+      const entries = Object.entries(raw)
+      const [k, v] = entries[0] || []
+      if (entries.length === 1 && v && typeof v === 'object' && (v.command || v.url)) {
+        name = k
+        cfg = v
+      }
+    }
+    if (!cfg || typeof cfg !== 'object') return warn('未识别到服务器配置对象')
+    const type = ['http', 'sse', 'stdio', 'websocket'].includes(cfg.type)
+      ? cfg.type
+      : cfg.command ? 'stdio' : cfg.url ? 'http' : ''
+    if (!type) return warn('配置缺少 command / url / type 字段')
+    set({
+      name,
+      type,
+      command: cfg.command || '',
+      args: Array.isArray(cfg.args) ? cfg.args.join(' ') : String(cfg.args || ''),
+      env: cfg.env && typeof cfg.env === 'object'
+        ? Object.entries(cfg.env).map(([k, v]) => `${k}=${v}`).join('\n') : '',
+      url: cfg.url || '',
+      headers: cfg.headers && typeof cfg.headers === 'object'
+        ? Object.entries(cfg.headers).map(([k, v]) => `${k}=${v}`).join('\n') : '',
+    })
+    ok('已解析并反填到表单')
+  }
 
   const tools = syncedTools ?? detail?.tools ?? []
   const toolNames = tools.map((t) => t.name)
@@ -191,8 +241,24 @@ export default function McpEditForm({ resource, detail, tagSuggestions = [], onC
               </Field>
             )}
             <div>
-              <div className="mb-1.5 block-label">配置预览</div>
-              <pre className="overflow-x-auto rounded-btn bg-subtle px-3 py-2.5 font-mono text-xs leading-relaxed text-ink2">{previewJson}</pre>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <div className="block-label">配置 JSON（可直接粘贴 mcpServers 配置）</div>
+                <div className="flex flex-none gap-1.5">
+                  <button className="btn-outline !py-1 !text-xs" onClick={() => setJsonText(null)}>
+                    从表单生成
+                  </button>
+                  <button className="btn-primary !py-1 !text-xs" onClick={applyJson}>
+                    解析并反填表单
+                  </button>
+                </div>
+              </div>
+              <textarea
+                className="field resize-none font-mono !text-xs"
+                rows={9}
+                spellCheck={false}
+                value={jsonText ?? previewJson}
+                onChange={(e) => setJsonText(e.target.value)}
+              />
             </div>
           </>
         )}

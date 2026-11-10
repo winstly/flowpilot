@@ -53,10 +53,10 @@ export default function TasksPage() {
   const [dlgType, setDlgType] = useState(null)
   const [pubTask, setPubTask] = useState(null) // 结束且被选中申请发布的任务
 
-  // 任务结束后的 Workflow 发布入口：AI 草稿 + 对话调整 → 进入市场待审批
+  // 任务结束后的 Workflow 发布入口：AI 草稿 + 对话调整 → 进入市场待审批；节点 Agent 同步发布
   const publishFromTask = (draft) => {
     const res = publishWorkflowFromTask(pubTask, draft)
-    ok(`「${res.name}」已提交申请，待审批`)
+    ok(`「${res.name}」已提交申请，待审批${res.syncedAgents?.length ? `（同步发布 ${res.syncedAgents.length} 个 Agent）` : ''}`)
   }
 
   const tasks = taskStore.list()
@@ -181,7 +181,8 @@ export default function TasksPage() {
       <WorkflowPublishDialog
         open={!!pubTask}
         onOpenChange={(o) => !o && setPubTask(null)}
-        draft={pubTask ? { name: pubTask.title } : null}
+        draft={pubTask ? { name: pubTask.workflow?.name || pubTask.title } : null}
+        agents={pubTask ? [...new Set(pubTask.board.map((n) => n.agent).filter((a) => a && a !== '用户审查'))] : []}
         onPublish={publishFromTask}
       />
 

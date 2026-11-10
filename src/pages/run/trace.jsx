@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react'
 import { ok, warn, fail, info } from '@/lib/toast'
 import {
   Brain, Wrench, Puzzle, SquareTerminal, FileText, MessageSquareWarning,
-  UserCheck, ChevronDown, LoaderCircle, Check,
+  UserCheck, ChevronDown, LoaderCircle, Check, SendHorizontal,
 } from 'lucide-react'
 import AskUserQuestion from '@/components/AskUserQuestion'
+import MarkdownLite from '@/components/MarkdownLite'
 import { taskStore } from '@/store/taskStore'
 
-/* ---------- 执行轨迹：Agent 事件流（思考 / MCP / Skill / Shell / 输出 / 重试） ---------- */
+/* ---------- 执行轨迹：Agent 事件流（派工 / 思考 / MCP / Skill / Shell / 输出 / 重试） ---------- */
 const EV_META = {
+  brief: { Icon: SendHorizontal, label: '派工', title: '主 Agent 派工简报', color: 'text-brand-deep', bg: 'bg-brand-soft', ring: 'ring-brand/20' },
   think: { Icon: Brain, label: '思考', title: '思考过程', color: 'text-mute', bg: 'bg-mute-soft', ring: 'ring-mute/20' },
   tool: { Icon: Wrench, label: 'MCP', title: 'MCP 调用', color: 'text-info', bg: 'bg-info-soft', ring: 'ring-info/20' },
   skill: { Icon: Puzzle, label: 'Skill', title: 'Skill 调用', color: 'text-info', bg: 'bg-info-soft', ring: 'ring-info/20' },
@@ -189,7 +191,9 @@ export function TracePanel({ node, task, scrollRef, refresh }) {
                     {e.kind === 'FS' ? '文件' : meta.label}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-xs font-medium leading-[1.45] text-ink">
-                    {e.kind === 'FS' ? `工具调用 ${e.name}` : meta.title}
+                    {e.t === 'brief'
+                      ? `主 Agent → ${e.role}：执行简报`
+                      : e.kind === 'FS' ? `工具调用 ${e.name}` : meta.title}
                     {isStreamingLast && <span className="animate-pulse text-brand">▍</span>}
                   </span>
                   {e.ms && <span className="flex-none text-xs tabular-nums text-mute">{e.ms}</span>}
@@ -200,6 +204,40 @@ export function TracePanel({ node, task, scrollRef, refresh }) {
                 </button>
                 {bodyOpen && (
                   <div className="mt-1.5 text-xs leading-relaxed text-ink2">
+                    {e.t === 'brief' && (
+                      // 派工单：主 Agent 给本节点的完整交代（职责/目标/上游产出/纠正约束）
+                      <div className="space-y-1.5">
+                        <div>职责：<b className="font-medium text-ink">{e.role}</b></div>
+                        <div>任务目标：<span className="text-ink">{e.goal}</span></div>
+                        {e.instruction && (
+                          <div className="rounded-sm bg-brand-soft px-2 py-1 text-brand-deep">
+                            派工指令：{e.instruction}
+                          </div>
+                        )}
+                        {e.upstream?.length ? (
+                          <div>
+                            <div className="text-mute">上游节点产出（主 Agent 转交）：</div>
+                            {e.upstream.map((u) => (
+                              <div key={u.id} className="mt-1 border-l-2 border-line pl-2">
+                                <div className="font-medium text-ink">{u.name}</div>
+                                {u.text}
+                                {u.files?.length > 0 && (
+                                  <div className="mt-0.5 text-mute">交付文件：{u.files.join('、')}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-mute">上游节点产出：无（本节点为首节点）</div>
+                        )}
+                        {e.feedback?.length > 0 && (
+                          <div>
+                            <div className="text-warn">用户纠正约束（必须遵守）：</div>
+                            {e.feedback.map((f, j) => <div key={j}>- {f}</div>)}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {isAsk && e.questions && (
                       <AskUserQuestion
                         questions={e.questions}
@@ -226,7 +264,10 @@ export function TracePanel({ node, task, scrollRef, refresh }) {
                     )}
                     {e.t === 'text' && (
                       <div className="text-ink">
-                        <TypewriterText text={e.text} active={isStreamingLast} />
+                        {/* 流式中逐字显现；完成后按 markdown 渲染（产出说明多为 md，裸文本糊成一坨） */}
+                        {isStreamingLast
+                          ? <TypewriterText text={e.text} active />
+                          : <MarkdownLite content={e.text} />}
                       </div>
                     )}
                     {e.t === 'error' && <span className="text-warn">{e.text}</span>}

@@ -8,8 +8,13 @@ const store = require('../electron/store.cjs')
 const AgentHost = require('../electron/agent-host.cjs')
 
 // 临时库目录（含真实凭据副本）：结束/失败都要清掉，不留在 %TEMP%
+// Windows 偶发句柄占用 EPERM：清理失败不掩盖冒烟结论（下次手动清即可）
 let tmpDir = null
-const cleanup = () => { if (tmpDir) { fs.rmSync(tmpDir, { recursive: true, force: true }); tmpDir = null } }
+const cleanup = () => {
+  if (!tmpDir) return
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }) } catch { console.log('CLEANUP SKIP（句柄占用）:', tmpDir) }
+  tmpDir = null
+}
 
 async function main() {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowpilot-tools-smoke-'))

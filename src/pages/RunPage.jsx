@@ -3,7 +3,7 @@ import { useNavigate, useParams, Navigate, useSearchParams, useLocation } from '
 import { ok, warn, fail, info } from '@/lib/toast'
 import {
   ArrowLeft, Play, MessagesSquare, Bot, Sparkles, CircleCheck, UserCheck,
-  MessageSquareWarning, TrendingUp, CheckCheck, Minus, Plus, Share, LoaderCircle, Square, RotateCcw,
+  MessageSquareWarning, TrendingUp, CheckCheck, Minus, Plus, Share, LoaderCircle, Square, RotateCcw, Workflow as WorkflowIcon,
 } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import WorkflowPublishDialog from '@/components/WorkflowPublishDialog'
@@ -138,6 +138,11 @@ export default function RunPage() {
   useEffect(() => {
     if (!task || !window.agent) return
     return window.agent.onEvent((ev) => {
+      if (ev.type === 'chat_delta') {
+        // 主 Agent 流式应答：增量上屏（只认本任务的在途对话）
+        if (ev.taskId === task.id && chatActiveRef.current) setChatStream((s) => s + ev.delta)
+        return
+      }
       if (ev.type === 'run_end') {
         if (pendingRerunRef.current) {
           pendingRerunRef.current = false
@@ -246,6 +251,8 @@ export default function RunPage() {
   }, [])
   const [chatText, setChatText] = useState('')
   const [chatPending, setChatPending] = useState(false)
+  const [chatStream, setChatStream] = useState('') // 主 Agent 流式应答缓冲（打字泡实时上屏）
+  const chatActiveRef = useRef(false) // 在途对话标记：chat_delta 只认在途的那段
   const pendingRerunRef = useRef(false) // 执行中攒下的重新编排，run_end 后只重跑变更节点
   const planGenRef = useRef(0) // 编排代际：取消/新一轮编排递增，在途结果按代际丢弃
   const [zoom, setZoom] = useState(1)
@@ -279,9 +286,12 @@ export default function RunPage() {
     taskStore.addCorrection(task.id, null, text)
     setChatText('')
     setChatPending(true)
+    setChatStream('')
+    chatActiveRef.current = true
     force()
     try {
       const r = await window.agent.chat({
+        taskId: task.id,
         goal: task.goal || task.title,
         board: task.board.map((n) => ({ name: n.name, status: n.status, output: n.output })),
         graph: {
@@ -316,7 +326,11 @@ export default function RunPage() {
         const changed = (fresh?.board || []).filter((n) => !reuseIds.has(n.id)).length
         force()
         const runLive = fresh?.status === 'running' || fresh?.status === 'pending'
-        if (runLive && gateWaiting) {
+        if (changed === 0) {
+          // 增量比对结果为空：重绘与当前流程无差异，不触发任何重跑
+          // （此前这里无条件 startRun，全部完成时 doneAll=true 反而把每个节点重跑一遍）
+          ok(`已重新编排「${r.replan.workflow.name}」：与当前流程无差异，未触发重跑`)
+        } else if (runLive && gateWaiting) {
           // 有挂起的确认门：旧确认门作废——先置重跑标记防 run_end 抢先到达，
           // 挂起的旧运行收尾后自动按新图增量续跑变更部分
           pendingRerunRef.current = true
@@ -347,7 +361,9 @@ export default function RunPage() {
       taskStore.addBotMessage(task.id, '（主 Agent 调用异常，已记录纠正）将在下轮执行中采纳。')
       warn(String(e?.message || e))
     } finally {
+      chatActiveRef.current = false
       setChatPending(false)
+      setChatStream('')
       force()
     }
   }
@@ -385,6 +401,13 @@ export default function RunPage() {
         <h1 className="truncate text-sm font-semibold text-ink">{task.title}</h1>
         <span className="text-xs text-mute">{task.id}</span>
         <Badge node={TASK_STATUS[task.status]} />
+        {/* Workflow 抽象流程名（如「全栈开发流程」）：任务是实例，流程是模板 */}
+        {(task.workflow?.name || getWorkflow(task.workflowId)?.name) && (
+          <span className="chip chip-accent flex-none" title="Workflow 抽象流程名">
+            <WorkflowIcon size={12} />
+            {task.workflow?.name || getWorkflow(task.workflowId)?.name}
+          </span>
+        )}
         <div className="flex-1" />
         <button className="btn-outline" onClick={() => setDrawer({ mode: 'chat' })}>
           <MessagesSquare size={14} />
@@ -575,14 +598,16 @@ export default function RunPage() {
         />
       )}
 
-      {/* 任务成功结束后的发布申请：AI 草稿 + 对话调整 */}
+      {/* 任务成功结束后的发布申请：AI 草稿 + 对话调整；节点 Agent 同步发布
+          默认名用编排推理出的抽象流程名（如「全栈开发流程」），不照抄任务输入 */}
       <WorkflowPublishDialog
         open={pubOpen}
         onOpenChange={setPubOpen}
-        draft={{ name: task.title }}
+        draft={{ name: task.workflow?.name || task.title }}
+        agents={[...new Set(task.board.map((n) => n.agent).filter((a) => a && a !== '用户审查'))]}
         onPublish={(draft) => {
           const res = publishWorkflowFromTask(task, draft)
-          ok(`「${res.name}」已提交申请，待审批`)
+          ok(`「${res.name}」已提交申请，待审批${res.syncedAgents?.length ? `（同步发布 ${res.syncedAgents.length} 个 Agent）` : ''}`)
         }}
       />
 
@@ -595,6 +620,7 @@ export default function RunPage() {
           chatText={chatText}
           setChatText={setChatText}
           chatPending={chatPending}
+          chatStream={chatStream}
           onSend={sendCorrection}
           onClose={() => setDrawer(null)}
         />

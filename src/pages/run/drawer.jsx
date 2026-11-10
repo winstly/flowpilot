@@ -1,10 +1,11 @@
 import { useRef } from 'react'
-import { X, SendHorizonal, FolderOpen, FileText, LoaderCircle } from 'lucide-react'
+import { X, SendHorizonal, FolderOpen, FileText, Bot, MessagesSquare, LoaderCircle } from 'lucide-react'
 import { Badge } from '@/components/ui'
+import MarkdownLite from '@/components/MarkdownLite'
 import { TracePanel } from './trace'
 import { nodeStatus } from './shared'
 
-export default function Drawer({ mode, node, task, refresh, chatText, setChatText, chatPending, onSend, onClose }) {
+export default function Drawer({ mode, node, task, refresh, chatText, setChatText, chatPending, chatStream = '', onSend, onClose }) {
   const bodyRef = useRef(null)
   const msgs = task.messages.slice(-8)
   return (
@@ -52,7 +53,23 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
               {node.output && (
                 <div className="mt-3">
                   <div className="mb-1 block-label">{node.files?.length ? '产出说明' : '产出'}</div>
-                  <div className="rounded-btn bg-subtle px-3 py-2.5 text-xs leading-relaxed text-ink">{node.output}</div>
+                  {/* 节点产出多为 markdown：标题/列表/表格/代码/粗体按格式渲染，不再裸文本糊成一坨 */}
+                  <div className="rounded-btn bg-subtle px-3 py-2.5 text-xs leading-relaxed text-ink">
+                    <MarkdownLite content={node.output} />
+                  </div>
+                </div>
+              )}
+              {/* 实时生成流：模型每轮 2~7s，过程可见就不"卡"了 */}
+              {node.live?.partial && (
+                <div className="mt-3 rounded-btn border border-brand-line bg-brand-soft px-3 py-2.5 text-xs leading-relaxed">
+                  <div className="mb-1 flex items-center gap-1.5 font-medium text-brand-deep">
+                    <LoaderCircle size={11} className="animate-spin" />
+                    {node.live.kind === 'think' ? '正在思考' : '正在生成'}
+                  </div>
+                  <span className="whitespace-pre-wrap break-words text-ink2">
+                    {node.live.partial}
+                    <span className="animate-pulse text-brand motion-reduce:animate-none">▍</span>
+                  </span>
                 </div>
               )}
               <TracePanel node={node} task={task} scrollRef={bodyRef} refresh={refresh} key={node.id} />
@@ -69,36 +86,76 @@ export default function Drawer({ mode, node, task, refresh, chatText, setChatTex
               </div>
               <button className="iconbtn" onClick={onClose} aria-label="关闭抽屉"><X size={16} /></button>
             </div>
-            <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-              {msgs.length === 0 && (
-                <div className="pt-10 text-center text-sm text-mute">还没有对话，发送第一条纠正意见吧</div>
+            {/* 对话流：收发双方身份分明、时间戳出气泡、连续消息成组；贴底锚定贴近输入框；流式应答并入消息流不跳位 */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {msgs.length === 0 && !chatPending && (
+                <div className="flex h-full flex-col items-center justify-center gap-2.5 px-4 text-center">
+                  <span className="flex size-10 items-center justify-center rounded-panel bg-brand-soft text-brand">
+                    <MessagesSquare size={18} />
+                  </span>
+                  <p className="text-sm font-medium text-ink">还没有对话</p>
+                  <p className="text-xs leading-relaxed text-mute">
+                    发送纠正意见，主 Agent 会转译成执行约束回灌给节点
+                  </p>
+                </div>
               )}
-              {msgs.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div
-                    className={`max-w-[80%] rounded-panel px-3.5 py-2.5 text-sm leading-relaxed ${
-                      m.role === 'user'
-                        ? 'bg-brand text-white'
-                        : 'bg-mute-soft text-ink'
-                    }`}
-                  >
-                    {m.text}
-                    <span className={`mt-1 block text-xs ${m.role === 'user' ? 'text-white/70' : 'text-mute'}`}>
-                      {m.time}
-                    </span>
-                  </div>
+
+              {msgs.length > 0 || chatPending ? (
+                <div className="flex min-h-full flex-col justify-end">
+                  {msgs.map((m, i) => {
+                    const isUser = m.role === 'user'
+                    const groupStart = msgs[i - 1]?.role !== m.role
+                    const groupEnd = msgs[i + 1]?.role !== m.role // 时间戳只挂在组尾一条
+                    return isUser ? (
+                      <div key={i} className={`flex flex-col items-end ${groupStart ? 'mt-4' : 'mt-1.5'}`}>
+                        <div className="max-w-[82%] rounded-panel rounded-br-[4px] bg-brand px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap text-white shadow-card">
+                          {m.text}
+                        </div>
+                        {groupEnd && <span className="mt-1 text-[11px] tabular-nums text-mute">{m.time}</span>}
+                      </div>
+                    ) : (
+                      <div key={i} className={`flex gap-2.5 ${groupStart ? 'mt-4' : 'mt-1.5'}`}>
+                        <div className="w-7 flex-none">{groupStart && <AgentAvatar />}</div>
+                        <div className="min-w-0 max-w-[82%]">
+                          {groupStart && (
+                            <div className="mb-1 text-xs font-medium text-ink2">主 Agent</div>
+                          )}
+                          <div className="rounded-panel rounded-bl-[4px] border border-line bg-panel px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap text-ink shadow-card">
+                            {m.text}
+                          </div>
+                          {groupEnd && <span className="mt-1 block text-[11px] tabular-nums text-mute">{m.time}</span>}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {/* 主 Agent 应答中：三点跳动 → 逐字上屏 + 光标，随消息流滚动 */}
+                  {chatPending && (
+                    <div className={`flex gap-2.5 ${msgs.at(-1)?.role === 'bot' ? 'mt-1.5' : 'mt-4'}`}>
+                      <div className="w-7 flex-none">{msgs.at(-1)?.role === 'bot' ? null : <AgentAvatar />}</div>
+                      <div className="min-w-0 max-w-[82%]">
+                        {msgs.at(-1)?.role !== 'bot' && (
+                          <div className="mb-1 flex items-center gap-1.5 text-xs">
+                            <span className="font-medium text-ink2">主 Agent</span>
+                            <span className="flex items-center gap-1 text-mute">
+                              <span className="size-1.5 animate-pulse rounded-full bg-brand motion-reduce:animate-none" />
+                              生成中
+                            </span>
+                          </div>
+                        )}
+                        <div className="rounded-panel rounded-bl-[4px] border border-line bg-panel px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap text-ink shadow-card">
+                          {chatStream ? (
+                            <span>{chatStream}<span className="animate-pulse text-brand motion-reduce:animate-none">▍</span></span>
+                          ) : (
+                            <TypingDots />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
+              ) : null}
             </div>
-            {/* 主 Agent 应答中 */}
-            {chatPending && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-panel bg-mute-soft px-3.5 py-2.5 text-sm text-mute">
-                  <LoaderCircle size={13} className="animate-spin" />
-                  主 Agent 思考中…
-                </div>
-              </div>
-            )}
             <div className="flex items-center gap-2 border-t border-line px-4 py-3.5">
               <input
                 className="field"
@@ -132,4 +189,24 @@ const Row = ({ k, v }) => (
     <dt className="flex-none text-ink2">{k}</dt>
     <dd className="truncate font-medium text-ink">{v}</dd>
   </div>
+)
+
+// 主 Agent 身份锚：消息组头的头像块，与画布节点图标同一家族
+const AgentAvatar = () => (
+  <span className="flex size-7 items-center justify-center rounded-btn bg-brand-soft text-brand">
+    <Bot size={14} strokeWidth={1.9} />
+  </span>
+)
+
+// 思考中的三点跳动（无文本阶段）；reduced-motion 时静止
+const TypingDots = () => (
+  <span className="flex items-center gap-1 py-0.5" role="status" aria-label="主 Agent 正在输入">
+    {[0, 1, 2].map((i) => (
+      <span
+        key={i}
+        className="size-1.5 animate-bounce rounded-full bg-mute motion-reduce:animate-none"
+        style={{ animationDelay: `${i * 130}ms`, animationDuration: '0.9s' }}
+      />
+    ))}
+  </span>
 )

@@ -9,6 +9,7 @@ import ResourcePicker from '@/components/ResourcePicker'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { AGENT_CATEGORIES } from '@/data/agents'
 import { resources, agentDetails } from '@/data/resources'
+import { removePublishedAgent } from '@/store/marketStore'
 
 const mcpNames = resources.filter((r) => r.kind === 'MCP' && r.status === '正常').map((r) => r.name)
 const skillNames = resources.filter((r) => r.kind === 'Skill' && r.status === '正常').map((r) => r.name)
@@ -45,6 +46,7 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
   const [confirmDel, setConfirmDel] = useState(null)
 
   const deleteAgent = () => {
+    removePublishedAgent(confirmDel.id) // 随 Workflow 发布的 Agent 从持久层一并移除，刷新不复活
     setList((l) => l.filter((a) => a.id !== confirmDel.id))
     ok(`已删除「${confirmDel.name}」`)
   }
@@ -86,15 +88,17 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
     const tags = form.tags
 
     if (editing === 'new') {
+      // capabilities 先算好：snapshot 里不能引用 agent 自身（const 初始化器内自引用 = TDZ 运行时必炸）
+      const capabilities = tags.length ? tags : ['待配置']
       const agent = {
         id: `ag-${Date.now()}`, name, category, tags,
         desc: form.desc || '（待补充说明）', version: 'v1.0', status: '待发布',
-        capabilities: tags.length ? tags : ['待配置'], rating: 0, calls: 0,
+        capabilities, rating: 0, calls: 0,
         owner: '檀小猊', prompt: form.prompt, model: form.model,
         tools: form.mcps.length, skills: form.skills.length,
         versions: [{
           v: 'v1.0', date: today(), note: '创建申请（待审批）',
-          snapshot: { name, category, tags, desc: form.desc || '（待补充说明）', capabilities: agent.capabilities, tools: form.mcps.length, skills: form.skills.length, model: form.model, version: 'v1.0', status: '待发布', owner: '檀小猊' },
+          snapshot: { name, category, tags, desc: form.desc || '（待补充说明）', capabilities, tools: form.mcps.length, skills: form.skills.length, model: form.model, version: 'v1.0', status: '待发布', owner: '檀小猊' },
         }],
       }
       // 详情数据入库，「查看」即可预览配置
@@ -177,13 +181,16 @@ export default function AgentGrid({ list, setList, q, favs, onToggleFav, registe
                   <button className="btn-ghost !px-2.5 !text-xs" onClick={() => openEdit(a)}>
                     <Pencil size={13} />编辑
                   </button>
-                  <button
-                    className="btn-danger-ghost !px-2.5 !text-xs"
-                    aria-label={`删除 ${a.name}`}
-                    onClick={() => setConfirmDel(a)}
-                  >
-                    <Trash2 size={13} />删除
-                  </button>
+                  {/* 属于自己的 Agent（owner=当前用户）才允许删除；团队内置 Agent 不可删 */}
+                  {a.owner === '檀小猊' && (
+                    <button
+                      className="btn-danger-ghost !px-2.5 !text-xs"
+                      aria-label={`删除 ${a.name}`}
+                      onClick={() => setConfirmDel(a)}
+                    >
+                      <Trash2 size={13} />删除
+                    </button>
+                  )}
                   <button className="btn-outline !py-1.5 !px-2.5 !text-xs" onClick={() => setDetailRes({ ...a, kind: 'Agent', status: a.status || '正常' })}>
                     <Eye size={13} />查看
                   </button>
